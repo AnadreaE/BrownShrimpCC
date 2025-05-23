@@ -35,32 +35,6 @@ K_func = function(temperature){
 }
 
 
-
-#' K func based of flexTPC NB: for the time being all params only for fems
-#'
-#' @param temperature
-#'
-#' @returns  K value as function of temperature
-#' @export
-#'
-#' @examples
-K_func_briere = function(temperature){
-  r_max_f = 0.007638409
-  T_min = 0.4
-  T_max = 30
-  alpha = 0.539550
-  beta = 0.277740
-  diff_min = temperature - T_min
-  diff_max = T_max - temperature
-  alpha_invert = 1 - alpha
-  return(r_max_m*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff_max)  )^(alpha*alpha_invert/(beta^2) ))
-}
-
-
-
-
-
-
 #'Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 #'
 #' @param temperature Temperature [°C]

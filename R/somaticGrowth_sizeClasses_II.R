@@ -14,15 +14,22 @@
 #'
 #' @examples
 K_func_briere = function(temperature){
-  r_max_f = 0.007638409
-  T_min = 0.4
-  T_max = 30
-  alpha = 0.539550
-  beta = 0.277740
-  diff_min = temperature - T_min
-  diff_max = T_max - temperature
-  alpha_invert = 1 - alpha
-  return(r_max_f*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff_max)  )^(alpha*alpha_invert/(beta^2) ))
+  toReturn = 0
+  if (temperature < 0.5) {  }#this funtion returns NaN when T (0.0001, 0.4)
+  else {
+    r_max_f = 0.007638409
+    T_min = 0.4
+    T_max = 30
+    alpha = 0.541524
+    beta = 0.276430
+    diff_min = temperature - T_min
+    diff_max = T_max - temperature
+    diff = T_max - T_min
+    alpha_invert = 1 - alpha
+    toReturn = r_max_f*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) )
+  }
+
+  return(toReturn)
 }
 
 
@@ -74,8 +81,15 @@ spawning_rate_b = function(L, temperature){
 #'
 #' @examples
 natural_mortality_b = function(temperature,L){
-  mu = m*convertL_to_W(L)*K_func_briere(temperature)# this is the rigth term of vB eq.
-  if (L>5) mu = 0 #tbc
+  mu = 0
+  if (temperature < 0.5){ #this funtion returns NaN when T (0.0001, 0.4)
+    mu = 2.596234e-06 # equivalent to natural_mortality_b(0.5)
+  } else {
+    if (L>5) {} # nothing happens, mu = 0
+    else{
+      mu = m*convertL_to_W(L)*K_func_briere(temperature)# this is the rigth term of vB eq.
+    }
+  }
   return(mu)
 }
 
