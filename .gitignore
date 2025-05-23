@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # History files
 .Rhistory
 .Rapp.history
@@ -48,6 +48,4 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
-=======
 
->>>>>>> ce7f2a3 (Initial commit)
