@@ -76,6 +76,7 @@ length(K_estimations_f)
 
 #STEP(3) plot to see the shape of the curve:
 plot(temperature_range, K_estimations_f, main='K estiations female')
+T_opt <- which.max(K_estimations_f)*0.1 #this is the T_opt
 
 
 
@@ -418,6 +419,8 @@ func_K_briere <- function(temperature) { #refers for the time being only females
 }
 
 # Define the system of equations (solver for dl/dt)
+temperature_15_17 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2017")
+
 system.equations <- function(t, state, parameters) {
   with(as.list(c(state, parameters)), {
     if (sex=='F'){
@@ -427,7 +430,7 @@ system.equations <- function(t, state, parameters) {
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
-    K <- func_K_briere(temperature_15_16$temperature[floor(t)])  # Access temperature for the current time
+    K <- func_K_briere(temperature_15_17$temperature[floor(t)])  # Access temperature for the current time
     dl.dt <- K * (L_as - l)  # Differential equation
 
     return(list(dl.dt))  # Return the rate of change
@@ -435,10 +438,11 @@ system.equations <- function(t, state, parameters) {
 }
 
 t2 = seq(1, 730, 0.01)
+t3 = seq(1, 1095, 0.01)
 
 ##Simulation Fem
 parameters <- list(sex='F')
-cc_f_b <- ode(y = state, times = t2, func = system.equations, parms = parameters)# Solve the ODE
+cc_f_b <- ode(y = state, times = t3, func = system.equations, parms = parameters)# Solve the ODE
 cc_f_b <- as.data.frame(cc_f_b)
 head(cc_f_b)
 
@@ -450,8 +454,8 @@ L_as_m <- 55
 
 #simulation female
 initial_size <- 6 #mm
-for (i in 1:length(temperature_15_16$date_time) ){
-  development_Temming <- som_growth(initial_size, temperature_15_16$temperature[i], L_as_f ,"F")
+for (i in 1:length(temperature_15_17$date_time) ){
+  development_Temming <- som_growth(initial_size, temperature_15_17$temperature[i], L_as_f ,"F")
   initial_size <- development_Temming
   temming_growth_f <- append(temming_growth_f, development_Temming)
 }
@@ -459,7 +463,7 @@ for (i in 1:length(temperature_15_16$date_time) ){
 
 ##Plot Fem
 female_plot_b <- ggplot() +
-  geom_point(aes(x = 1: length(temperature_15_16$temperature), y = temming_growth_f, color = "Empirical function"),
+  geom_point(aes(x = 1: length(temperature_15_17$temperature), y = temming_growth_f, color = "Empirical function"),
              size = 2, shape = 21, fill = "gray") +  # Use points for temperature growth data
   geom_line(aes(x = cc_f_b$time, y = cc_f_b$l, color = "Analytical model"),
             size = 0.75) +  # Line for cc_f

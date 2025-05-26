@@ -15,7 +15,8 @@
 #' @examples
 K_func_briere = function(temperature){
   toReturn = 0
-  if (temperature < 0.5) {  }#this funtion returns NaN when T (0.0001, 0.4)
+  if (temperature < 0.5) {
+    toReturn = 0 }#this funtion returns NaN when T (0.0001, 0.4)
   else {
     r_max_f = 0.007638409
     T_min = 0.4
@@ -172,3 +173,35 @@ solver_sizeClass_extended_b = function(t, state, parameters, temperature_dataSet
   return(sol)
 }
 
+
+
+#' Somatic growth in one time step of 1 day with K_func as TPC
+#'
+#' @param Tem temperature [°C]
+#' @param sex 'F' or 'M'
+#' @param L current size [cm]
+#'
+#' @returns new size after gorwth dependent on temperature
+#' @export
+#'
+#' @examples som_growthAF(3, 10, "F")
+som_growthAF <- function(L, Tem, sex){
+  growth <- 0
+
+  L_inf_f = 85
+  L_inf_m <- 55
+
+  if ((L > L_inf_f/10 && sex == 'F') || (L> L_inf_m/10 && sex == 'M') ){ } #nothing happens, growth = 0
+
+  else {
+    if (sex == 'F'){
+      growth <- L_inf_f*(1 - exp(-K_func_briere(Tem)))
+    }
+    if (sex == 'M'){
+      growth <- L_inf_m*(1 - exp(-K_func_briere(Tem)))
+    }
+
+  }
+
+  return (L + growth/10)
+}

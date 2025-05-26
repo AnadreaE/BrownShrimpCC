@@ -28,10 +28,11 @@ convertL_to_W = function(L){
 #' @examples
 K_func = function(temperature){
   #following param. vals have been estimated and docum ented in Thesis Appx. A
-  a = 0.008
-  W = 7 # Twidth
-  T_opt = 16 # optimal temperature
-  return (a*exp(-(temperature-T_opt)/(2*W)))
+  a = 0.007614#0.008
+  mu =  16.24 # average
+  sigma = 7.098
+  #T_opt = 16.5 # optimal temperature
+  return (a * exp(-((temperature - mu)^2) / (2 * sigma^2)))
 }
 
 
@@ -118,7 +119,7 @@ natural_mortality = function(temperature,L){
 #'
 #' @examples
 new_food = function(t) {
-  0.1 * (2 + cos( (2*pi/ 365)*(t-172) ) )
+  0.2 * (2 + cos( (2*pi/ 365)*(t-172) ) )
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
 }
 
@@ -212,4 +213,13 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
 
   return(sol)
 }
+
+
+
+
+
+
+
+
+
 

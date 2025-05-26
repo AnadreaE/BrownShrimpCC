@@ -7,7 +7,7 @@
 som_growth(b_length, temperature, max_size, sex)
 }
 \arguments{
-\item{b_length}{current length \link{mm}}
+\item{b_length}{current body length \link{mm}}
 
 \item{temperature}{current day temperature \link{°C}}
 

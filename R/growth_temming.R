@@ -71,7 +71,7 @@ larvae_dev <- function(dev_status, temperature) {
 #Def function for somatic growth for Juvenile_I
 #' Somatic growth for juvenile and adult
 #'
-#' @param b_length current length [mm]
+#' @param b_length current body length [mm]
 #' @param temperature current day temperature [°C]
 #' @param max_size asymptotic size [mm]
 #' @param sex distinct param. values for male and females 'F' or 'M'.
