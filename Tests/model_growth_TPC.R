@@ -206,9 +206,10 @@ test_briere <- test_briere[ , -1] # delete timesteps column
 test_briere_long <- test_briere %>%
   pivot_longer(-dateTime, names_to = "variable", values_to = "value")
 
+#dev.off()
 ggplot(test_briere_long, aes(x = dateTime, y = value, color = variable)) +
   geom_line(size = 1) +  # Plot lines
-  labs(title = " extended size classes Briere aprox. each 10 mm \n 2010-2011", x = "Days", y = "Biomass") +
+  labs(title = " extended size classes Briere aprox. each 10 mm \n 2010-2014", x = "Days", y = "Biomass") +
   scale_color_manual(
     values = c( "P" = "#d9f0a3", "E"= "#1c9099" ,"L" = "gray"  ,"J" = "#bfd3e6", "J2" = "#9ebcda", "J3" = "#8c96c6", "J4" = "#8856a7", "J5" = "#810f7c" ,
                 "A1" = "#fd8d3c" ,"A2" = "#e6550d" )) +
@@ -216,10 +217,54 @@ ggplot(test_briere_long, aes(x = dateTime, y = value, color = variable)) +
   theme(plot.title = element_text(hjust = 0.5), # Center title
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
-        legend.position="bottom") + ylim(0,1.5) + xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2010-07-10", format="%Y-%m-%d", tz = "UTC") )
+        legend.position="bottom") + ylim(0,50) #+ xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2012-07-10", format="%Y-%m-%d", tz = "UTC") )
 
 
 
+##### Stacked area chart with K as TPC ####
+#preparation:
+
+df_long_testBriere <- test_briere[ , -1] %>% #delete  plancton col
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+
+#ensure that vertical order is same as life stages
+stack_order_Br <- rev(c(colnames(test_briere)[2:10]) )
+
+# Ensure 'variable' is a factor with levels in the same order
+df_long_testBriere$variable <- factor(df_long_testBriere$variable, levels = stack_order_Br)
+
+
+ggplot(df_long_testBriere, aes(x = dateTime, y = value, fill = variable)) +
+  geom_area() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "K func as TPC",
+    x = "Date",
+    y = "Biomass",
+    fill = "Size class"
+  )
+
+
+## Second test Briere:
+df_long2_testBriere <- test2Briere[ , -1] %>% #delete  plancton col
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+
+#ensure that vertical order is same as life stages
+stack_order_Br2 <- rev(c(colnames(test2Briere)[2:10]) )
+
+# Ensure 'variable' is a factor with levels in the same order
+df_long_testBriere$variable <- factor(df_long2_testBriere$variable, levels = stack_order_Br2)
+
+#dev.off()
+ggplot(df_long2_testBriere, aes(x = dateTime, y = value, fill = variable)) +
+  geom_area() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "K func as TPC with more food",
+    x = "Date",
+    y = "Biomass",
+    fill = "Size class"
+  )
 
 
 
