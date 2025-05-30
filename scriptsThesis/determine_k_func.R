@@ -10,6 +10,7 @@ library(BrownShrimp)
 ### UPLOAD AND FORMAT TEMPERATURE DATA ###
 
 temperature_ds <- read.csv("C:/Users/andre/Desktop/Hereon/Data/Wadden Sea, Penning/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
+#example to read from package <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
 
 #temperature_00_01 <- temperature_func(temperature_ds, "01/01/2000", "31/12/2001")
 #temperature_05_06 <- temperature_func(temperature_ds, "01/01/2005", "31/12/2006")
@@ -420,6 +421,7 @@ func_K_briere <- function(temperature) { #refers for the time being only females
 
 # Define the system of equations (solver for dl/dt)
 temperature_15_17 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2017")
+
 
 system.equations <- function(t, state, parameters) {
   with(as.list(c(state, parameters)), {

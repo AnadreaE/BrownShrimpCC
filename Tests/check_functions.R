@@ -1,3 +1,6 @@
+#Here I will check plausibility of individual funciton that are used in the model
+
+#### Some params ####
 temp_range = seq(1,30, 0.1)
 
 the.method = 'rk4'
@@ -7,6 +10,8 @@ epsilon = 0.22
 m = 3
 const_c = 0.01
 
+#### CHECK K FUNC ####
+
 #SEE K-FUNC GAUSS VS TPC
 plot(temp_range, sapply(temp_range, K_func), type = "b", col = "blue",
      xlab = "Temperature (°C)", ylab = "K(T)",
@@ -15,8 +20,7 @@ lines(temp_range, sapply(temp_range, K_func_briere), type = "b", col = 'red' , c
 legend("topright", legend = c("Gauss", "Briere"), col = c("blue", "red"), lty = 1, pch = 1)
 
 
-
-#TEST NATURAL MORTALITY
+#### CHECK NATURAL MORTALITY ####
 
 natural_mort_br <- sapply(temp_range, natural_mortality_b, 3)
 dev.off()
@@ -73,5 +77,10 @@ K_func_briere_t = function(temperature){
 
   return(toReturn)
 }
+
+#### CHECK SPAWNING ####
+
+
+
 
 

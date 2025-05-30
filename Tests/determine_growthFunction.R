@@ -100,8 +100,8 @@ b_juvI <- coef(fit_juvI)[3]
 c_juvI <- coef(fit_juvI)[2]
 
 #(optional) plot results form fit:
-plot(temperature_range, dev_time_juvI, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv I')
-lines(temperature_range_red_juvI, predict(fit_juvI), col = 'lightseagreen', lwd = 2.5)
+#plot(temperature_range, dev_time_juvI, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv I')
+#lines(temperature_range_red_juvI, predict(fit_juvI), col = 'lightseagreen', lwd = 2.5)
 
 #### JUVII ####
 development_df_juvII <- data.frame(row = seq(1, 1095))
@@ -142,8 +142,8 @@ b_juvII <- coef(fit_juvII)[3]
 c_juvII <- coef(fit_juvII)[2]
 
 #(optional) plot results form fit:
-plot(temperature_range, dev_time_juvII, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv II')
-lines(temperature_range_red_juvII, predict(fit_juvII), col = 'lightseagreen', lwd = 2.5)
+#plot(temperature_range, dev_time_juvII, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv II')
+#lines(temperature_range_red_juvII, predict(fit_juvII), col = 'lightseagreen', lwd = 2.5)
 
 #### JUVIII ####
 
@@ -184,8 +184,8 @@ b_juvIII <- coef(fit_juvIII)[3]
 c_juvIII <- coef(fit_juvIII)[2]
 
 #(optional) plot results form fit:
-plot(temperature_range, dev_time_juvIII, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv III')
-lines(temperature_range_red_juvIII, predict(fit_juvIII), col = 'lightseagreen', lwd = 2.5)
+#plot(temperature_range, dev_time_juvIII, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv III')
+#lines(temperature_range_red_juvIII, predict(fit_juvIII), col = 'lightseagreen', lwd = 2.5)
 
 #### JUVIV ####
 
@@ -226,11 +226,8 @@ b_juvIV <- coef(fit_juvIV)[3]
 c_juvIV <- coef(fit_juvIV)[2]
 
 #(optional) plot results form fit:
-plot(temperature_range, dev_time_juvIV, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv IV')
-lines(temperature_range_red_juvIV, predict(fit_juvIV), col = 'lightseagreen', lwd = 2.5)
-
-
-
+#plot(temperature_range, dev_time_juvIV, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv IV')
+#lines(temperature_range_red_juvIV, predict(fit_juvIV), col = 'lightseagreen', lwd = 2.5)
 
 #### juvV ####
 
@@ -271,8 +268,8 @@ b_juvV <- coef(fit_juvV)[3]
 c_juvV <- coef(fit_juvV)[2]
 
 #(optional) plot results form fit:
-plot(temperature_range, dev_time_juvV, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv V')
-lines(temperature_range_red_juvV, predict(fit_juvV), col = 'lightseagreen', lwd = 2.5)
+#plot(temperature_range, dev_time_juvV, pch = 1, col = 'gray28', las = 1, xlab = 'T [?C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Juv V')
+#lines(temperature_range_red_juvV, predict(fit_juvV), col = 'lightseagreen', lwd = 2.5)
 
 
 #### adultI ####
@@ -320,10 +317,10 @@ a_adultI <- coef(fitII_adultI)[1]
 b_adultI <- coef(fitII_adultI)[3]
 c_adultI <- coef(fitII_adultI)[2]
 
-plot(temperature_range, dev_time_adultI, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Adult I')
-lines(temperature_range_redII_adultI, predict(fitII_adultI), col = 'lightseagreen', lwd = 2.5)
+#plot(temperature_range, dev_time_adultI, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Adult I')
+#lines(temperature_range_redII_adultI, predict(fitII_adultI), col = 'lightseagreen', lwd = 2.5)
 
-plot(temperature_range, 1/dev_time_adultI, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Adult I')
+#plot(temperature_range, 1/dev_time_adultI, pch = 1, col = 'gray28', las = 1, xlab = 'T [°C]', ylab = 'developent time [days]', cex.lab = 1.5, main = 'Class: Adult I')
 
 
 
@@ -574,7 +571,7 @@ ggplot(df_long2, aes(x = dateTime, y = value, fill = variable)) +
     x = "Date",
     y = "Biomass",
     fill = "Size class"
-  )
+  ) #+ ylim(0, 20)
 
 
 #### Stacked area chart compact version ####

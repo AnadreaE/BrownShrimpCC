@@ -118,43 +118,37 @@ solver_sizeClass_extended_b = function(t, state, parameters, temperature_dataSet
       #LARVAE
       gE = shift_next_sizeClass(Te, 'egg')
       IL = ingestion_rate_b(Te, LL, P)
-      #mL = natural_mortality_b(Te, LL)
-      mL = natural_mortality_test_b(Te, LL)
+      mL = natural_mortality_b(Te, LL)
       gL = shift_next_sizeClass(Te, 'larv')
       dL.dt = gE*E + IL*L - mL*L - gL*L
 
       #Juv I
       IJ = ingestion_rate_b(Te, LJ, P)
-      #mJ = natural_mortality_b(Te, LJ)
-      mJ = natural_mortality_test_b(Te, LJ)
+      mJ = natural_mortality_b(Te, LJ)
       gJI = shift_next_sizeClass(Te, 'juvI')
       dJ.dt = gL*L + IJ*J - mJ*J - gJI*J
 
       #Juv II
       IJ2 = ingestion_rate_b(Te,LJ2,P)
-      #mJ2 = natural_mortality_b(Te, LJ2)
-      mJ2 = natural_mortality_test_b(Te, LJ2)
+      mJ2 = natural_mortality_b(Te, LJ2)
       gJ2 = shift_next_sizeClass(Te, 'juvII')
       dJ2.dt = gJI*J + IJ2*J2 - mJ2*J2 - gJ2*J2 # - sA1*A1
 
       #Juv III
       IJ3 = ingestion_rate_b(Te,LJ3,P)
-      #mJ3 = natural_mortality_b(Te, LJ3)
-      mJ3 = natural_mortality_test_b(Te, LJ3)
+      mJ3 = natural_mortality_b(Te, LJ3)
       gJ3 = shift_next_sizeClass(Te, 'juvIII')
       dJ3.dt = gJ2*J2 + IJ3*J3 - mJ3*J3 - gJ3*J3 # - sA1*A1
 
       #Juv IV
       IJ4 = ingestion_rate_b(Te,LJ4,P)
-      #mJ4 = natural_mortality_b(Te, LJ4)
-      mJ4 = natural_mortality_test_b(Te, LJ4)
+      mJ4 = natural_mortality_b(Te, LJ4)
       gJ4 = shift_next_sizeClass(Te, 'juvIV')
       dJ4.dt = gJ3*J3 + IJ4*J4 - mJ4*J4 - gJ4*J4
 
       #Juv V
       IJ5 = ingestion_rate_b(Te,LJ5,P)
-      #mJ5 = natural_mortality_b(Te, LJ5)
-      mJ5 = natural_mortality_test_b(Te, LJ5)
+      mJ5 = natural_mortality_b(Te, LJ5)
       gJ5 = shift_next_sizeClass(Te, 'juvV')
       dJ5.dt = gJ4*J4 + IJ5*J5 - mJ5*J5 - gJ5*J5
 
