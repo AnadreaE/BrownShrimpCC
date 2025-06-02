@@ -1,6 +1,5 @@
 library(dplyr)
 library(ggplot2)
-library(cowplot) #for combined plots
 library(RColorBrewer)
 library("colorspace")
 library(deSolve)
@@ -383,14 +382,12 @@ shift_next_sizeClass = function(Te, sizeClass){
 
 ##### SYSTEM ########
 
-the.method = 'rk4'
-h = 0.2 # half saturatuion constant original aprox .5
-L_inf = 8.5
-epsilon = 0.22
-m = 3
-const_c = 0.01 # reference density g/cm3
-
-
+#the.method = 'rk4'
+#h = 0.2 # half saturatuion constant original aprox .5
+#L_inf = 8.5
+#epsilon = 0.22
+#m = 3
+#const_c = 0.01 # reference density g/cm3
 
 t = seq(0,length(temperature_10_11$temperature)-0.1, by = 0.1)
 t_5years = seq(0,length(temperature_10_14$temperature)-0.1, by = 0.1)
@@ -398,27 +395,6 @@ t_5years = seq(0,length(temperature_10_14$temperature)-0.1, by = 0.1)
 state = c(P = 2, E = 0.1, L= 0.4 , J = .4 , J2 = 0.3, J3 = 0.3, J4 = 0.2, J5 = 0.2, A1 = 0.35, A2 = 0.1)
 #state = c(P = 100, E = 2, L= 40 , J = 70 , J2 = 50, A2 = 40)
 parameters = c()
-
-dev.off()
-cc_1 <- solver_sizeClass_extended(t = t, state = state, parameters = parameters, temperature_10_11)
-
-#cc_1 = ode(y = state, times = t, func = system.equations, parms = parameters,method=the.method)
-#cc_1 = as.data.frame(cc_1) no needed anymore when using solver
-head(cc_1)
-
-cc_long_1 <- gather(cc_1, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
-ggplot(cc_long_1, aes(x = time, y = Value, color = Type)) +
-  geom_line(size = 1) +  # Plot lines
-  labs(title = " extended size classes 2010-2011 corrected \n aprox. each 10 mm", x = "Days", y = "Biomass") +
-  scale_color_manual(
-    values = c( "P" = "#d9f0a3", "E"= "#1c9099" ,"L" = "gray"  ,"J" = "#bfd3e6", "J2" = "#9ebcda", "J3" = "#8c96c6", "J4" = "#8856a7", "J5" = "#810f7c" ,
-                "A1" = "#fd8d3c" ,"A2" = "#e6550d" )) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5), # Center title
-        axis.title.x = element_text(size = 16),
-        axis.title.y = element_text(size = 16),
-        legend.position="bottom")
-
 
 ### now test new solver from library BrownShrimp AND reduce juveniles on initial contiditions
 

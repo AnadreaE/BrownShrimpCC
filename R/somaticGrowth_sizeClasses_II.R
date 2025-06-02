@@ -14,23 +14,20 @@
 #'
 #' @examples
 K_func_briere = function(temperature){
-  toReturn = 0
-  if (temperature < 1.5) {#this func returns NaN when T (0.0001, 0.4) but also values extremely small bellow T=2 in comparison with original K_vals
-    toReturn = 0.0001759071  } #this value is equivanlent to K_func_briere(1.4)
-  else {
-    r_max_f = 0.007638409
-    T_min = 0.5
-    T_max = 30
-    alpha = 0.541524
-    beta = 0.276430
-    diff_min = temperature - T_min
-    diff_max = T_max - temperature
-    diff = T_max - T_min
-    alpha_invert = 1 - alpha
-    toReturn = r_max_f*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) )
-  }
+  r_max_f = 0.007638409
+  T_min = 0.5
+  T_max = 30
+  alpha = 0.541524
+  beta = 0.276430
+  if(temperature < T_min) { temperature = T_min } #if this true, then T_min is negative and invalid to set to the power of alpha
 
-  return(toReturn)
+  diff_min = temperature - T_min
+  diff_max = T_max - temperature
+  diff = T_max - T_min
+  alpha_invert = 1 - alpha
+  toReturn = r_max_f*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) )
+
+  return(max(3.205227e-06, toReturn) ) #0.0001759071 is the equivalent to K_func_briere(T_min)
 }
 
 

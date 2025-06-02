@@ -5,6 +5,19 @@
 ################################################
 
 
+##### constant parameter values: #####
+
+attac_rate = 0.25
+handling_time = 22
+alpha_ir = 1/(attac_rate*handling_time)
+L_inf = 8.5
+epsilon = 0.22
+m = 3
+const_c = 0.01
+the.method = 'rk4'
+
+##### FUNCTIONS #####
+
 #' Convert size to weight W
 #'
 #' @param L size [cm]
@@ -50,7 +63,7 @@ K_func = function(temperature){
 ingestion_rate = function(temperature, L, P){
   c_div = const_c / convertL_to_W(L)
 
-  result = m*K_func(temperature)*convertL_to_W(L)*L_inf*(c_div)^(1/m)*( P/(P+h) )
+  result = m*K_func(temperature)*convertL_to_W(L)*L_inf*(c_div)^(1/m)*( P/(P+alpha_ir) )
 
   #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
   #1.14*K_func(T)*(L_inf/ L)^n *P/(P+h)
@@ -167,6 +180,10 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
   system.equations = function(t, state, parameters) {
     with(as.list(c(state, parameters)), {
 
+      #following 2 lines avoid negative values in state variables
+      state[state < 0] <- 0
+      list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
+
       Te = temperature_funcSolver(temperature_dataSet, t)
 
       #LARVAE
@@ -224,8 +241,7 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
 
       #Adult II
 
-
-      dE.dt =  sA1*A1*molA1 + sA2*A2*molA2 - gE*E #mA1*E: for adults, m equals cero because this is transfered to the spawning.therefore ake only sense to add mu of adults related to fishery (?)
+      dE.dt =  sA1*A1*molA1 + sA2*A2*molA2 - gE*E - sA1*A1*molA1*mA1 -  sA2*A2*molA2*mA2 #mA1*E: for adults, m equals cero because this is transfered to the spawning.therefore ake only sense to add mu of adults related to fishery (?)
 
       #Plancton
       dP.dt = new_food(t) - IL*L - IJ*J - IJ2*J2 - IJ3*J3- IJ4*J4- IJ5*J5  - IA1*A1 - IA2*A2

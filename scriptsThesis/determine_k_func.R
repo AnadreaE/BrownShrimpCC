@@ -168,7 +168,7 @@ legend("topleft",
 
 #### STEP (4) Again with TPC Briere instead of Gauss (F and M): ####
 #TPC: Termal Performance Curve
-T_min = 0.4
+T_min = 0.5
 T_max = 30
 T_range = seq(T_min, T_max, by= 0.1)
 
@@ -483,3 +483,5 @@ female_plot_b <- ggplot() +
   )
 
 print(female_plot_b)
+
+
