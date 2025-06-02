@@ -19,3 +19,6 @@ new size after gorwth dependent on temperature
 \description{
 Somatic growth in one time step of 1 day with K_func as TPC
 }
+\examples{
+som_growthAF(3, 10, "F")
+}

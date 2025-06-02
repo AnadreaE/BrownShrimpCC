@@ -439,7 +439,7 @@ cc_2_long <- cc_2 %>%
 
 ggplot(cc_2_long, aes(x = dateTime, y = value, color = variable)) +
   geom_line(size = 1) +  # Plot lines
-  labs(title = " extended size classes aprox. each 10 mm \n 2010-2014", x = "Days", y = "Biomass") +
+  labs(title = " extended size classes aprox. each 10 mm \n 2010-2014 ", x = "Days", y = "Biomass") +
   scale_color_manual(
     values = c( "P" = "#d9f0a3", "E"= "#1c9099" ,"L" = "gray"  ,"J" = "#bfd3e6", "J2" = "#9ebcda", "J3" = "#8c96c6", "J4" = "#8856a7", "J5" = "#810f7c" ,
                 "A1" = "#fd8d3c" ,"A2" = "#e6550d" )) +
@@ -447,7 +447,7 @@ ggplot(cc_2_long, aes(x = dateTime, y = value, color = variable)) +
   theme(plot.title = element_text(hjust = 0.5), # Center title
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
-        legend.position="bottom") + ylim(0,25)
+        legend.position="bottom") #+ ylim(0,100)
 
 
 ###### Barplots #######
@@ -571,7 +571,7 @@ ggplot(df_long2, aes(x = dateTime, y = value, fill = variable)) +
     x = "Date",
     y = "Biomass",
     fill = "Size class"
-  ) #+ ylim(0, 20)
+  ) + ylim(0, 850)
 
 
 #### Stacked area chart compact version ####
