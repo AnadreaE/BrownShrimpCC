@@ -90,7 +90,7 @@ molting_fraction <- function(L, temperature){
       mf = (1 / (5.7066 * L^0.7364 * exp(temperature*-0.09363) ) ) #revision 28.05. Temming's implementation (above was Temming's formula on paper)
     }
     else if (temperature > 16.2){
-      mf = (1 / (5.7066 * L^0.7364 * exp(16.2*-0.09363) ) ) #this aviod that fraction increases with higher temperatures and even with unrealistic T like 40°
+      mf = (1 / (5.7066 * L^0.7364 * exp(16.2*-0.09363) ) ) #this aviod that fraction increases with higher temperatures than T_opt and even with unrealistic T like 40°
     }
   }
 
@@ -127,10 +127,10 @@ spawning_rate = function(L, temperature){
 #'
 #' @examples
 respiration_rate = function(temperature,L){
-  mu = m*convertL_to_W(L)*K_func(temperature)# this is the rigth term of vB eq.
-  if (L>5) {
-    mu =  convertL_to_W(L) *K_func(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
-  }
+  mu = m*convertL_to_W(L)*K_func(temperature)*0.1 # this is the rigth term of vB eq.#0.1
+  #if (L>5) {
+  #  mu =  convertL_to_W(L) *K_func(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
+  #}
   return(mu)
 }
 
@@ -163,6 +163,29 @@ new_food = function(t) {
 
 
 
+#growth growth_optionA
+shift_next_sizeClass = function(L_mean, temperature, sex){
+  intercept = -0.4968367 #mean_intercept
+  #factor = 0.022447 * exp(0.306237 * L_mean) #0.06734 * exp(0.30622*L_mean)
+  factor = 0.02417559  * L_mean^0.9321806 #a_est and b_est was calculated in 'determine_growthFunctionV2.R'
+  k = K_func(temperature)
+  return(1/ (intercept + factor*(1/k)) )
+}
+
+hatch_eggs = function(Te){
+  Te = max(0.00001, Te)
+  return(1/ (1031.34*Te^-1.345)) #return the ratio
+}
+
+shiftTo_juvenile = function(Te){
+  Te = max(0.00001, Te)
+  return(1 / ((5.5/0.00584)*Te^-1.347)) #return the ratio
+}
+
+
+
+
+
 #' Solver for a size class model with Eggs, Larvae, 5 Juvenile classes and 2 Adult classes
 #'
 #' @param t
@@ -187,40 +210,45 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
       Te = temperature_funcSolver(temperature_dataSet, t)
 
       #LARVAE
-      gE = shift_next_sizeClass(Te, 'egg')
+      gE = hatch_eggs(Te)
       IL = ingestion_rate(Te, LL, P)
       mL = respiration_rate(Te, LL)
-      gL = shift_next_sizeClass(Te, 'larv')
+      gL = shiftTo_juvenile(Te)
       dL.dt = gE*E + IL*L - mL*L - gL*L
 
       #Juv I
       IJ = ingestion_rate(Te, LJ, P)
       mJ = respiration_rate(Te, LJ)
-      gJI = shift_next_sizeClass(Te, 'juvI')
+      #gJI = shift_next_sizeClass(Te, 'juvI')
+      gJI = shift_next_sizeClass(LJ, Te, 'F')
       dJ.dt = gL*L + IJ*J - mJ*J - gJI*J
 
       #Juv II
       IJ2 = ingestion_rate(Te,LJ2,P)
       mJ2 = respiration_rate(Te, LJ2)
-      gJ2 = shift_next_sizeClass(Te, 'juvII')
+      #gJ2 = shift_next_sizeClass(Te, 'juvII')
+      gJ2 = shift_next_sizeClass(LJ2, Te, 'F')
       dJ2.dt = gJI*J + IJ2*J2 - mJ2*J2 - gJ2*J2 # - sA1*A1
 
       #Juv III
       IJ3 = ingestion_rate(Te,LJ3,P)
       mJ3 = respiration_rate(Te, LJ3)
-      gJ3 = shift_next_sizeClass(Te, 'juvIII')
+      #gJ3 = shift_next_sizeClass(Te, 'juvIII')
+      gJ3 = shift_next_sizeClass(LJ3, Te, 'F')
       dJ3.dt = gJ2*J2 + IJ3*J3 - mJ3*J3 - gJ3*J3 # - sA1*A1
 
       #Juv IV
       IJ4 = ingestion_rate(Te,LJ4,P)
       mJ4 = respiration_rate(Te, LJ4)
-      gJ4 = shift_next_sizeClass(Te, 'juvIV')
+      #gJ4 = shift_next_sizeClass(Te, 'juvIV')
+      gJ4 = shift_next_sizeClass(LJ4, Te, 'F')
       dJ4.dt = gJ3*J3 + IJ4*J4 - mJ4*J4 - gJ4*J4
 
       #Juv V
       IJ5 = ingestion_rate(Te,LJ5,P)
       mJ5 = respiration_rate(Te, LJ5)
-      gJ5 = shift_next_sizeClass(Te, 'juvV')
+      #gJ5 = shift_next_sizeClass(Te, 'juvV')
+      gJ5 = shift_next_sizeClass(LJ5, Te, 'F')
       dJ5.dt = gJ4*J4 + IJ5*J5 - mJ5*J5 - gJ5*J5
 
 
@@ -229,7 +257,8 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
       sA1= spawning_rate(LA1, Te)
       mA1 = respiration_rate(Te, LA1)
       molA1 = molting_fraction(LA1*10, Te)
-      dA1.dt = gJ5*J5 + IA1*A1 - mA1*A1 - sA1*A1*molA1  #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A1
+      gA1 = shift_next_sizeClass(LA1, Te, 'F')
+      dA1.dt = gJ5*J5 + IA1*A1 - mA1*A1 - sA1*A1*molA1 - gA1*A1  #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A1
 
 
       #Adult II
@@ -237,7 +266,7 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
       sA2= spawning_rate(LA2, Te)
       mA2 = respiration_rate(Te, LA2)
       molA2 = molting_fraction(LA2*10, Te)
-      dA2.dt = gJ2*J2 + IA2*A2 - mA2*A2 - sA2*A2*molA2 #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A2
+      dA2.dt = gA1*A1 + IA2*A2 - mA2*A2 - sA2*A2*molA2 #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A2
 
       #Adult II
 

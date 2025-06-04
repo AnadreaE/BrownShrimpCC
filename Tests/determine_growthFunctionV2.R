@@ -40,8 +40,8 @@ LA1 = (adultI_min + adultI_max)/2
 LA2 = (adultII_min + adultII_max)/2
 LA3 = (adultIII_min + adultIII_max)/2
 
-sizeClass_names = c("LJ", "LJ2", "LJ3", "LJ4", "LJ5", "LA1", "LA2" )
-sizeClass_means = c(LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2 )
+sizeClass_names = c("LJ", "LJ2", "LJ3", "LJ4", "LJ5", "LA1", "LA2", "LA3" )
+sizeClass_means = c(LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3 )
 
 #### Def. growth function (as function of time) ####
 
@@ -59,7 +59,6 @@ lengthGrowth_funcTime = function (L0, time, temp, sex){ #L[cm]
 #### Simulations ####
 time_range <- seq(1,1095)
 temperature_range <- seq(0,30, 0.1) #(10,15)
-
 
 k_vals = sapply(temperature_range, K_func_briere)
 
@@ -391,93 +390,40 @@ legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "
 intercepts = c(coef(fit_JuvI)[1], coef(fit_juvII)[1], coef(fit_juvIII)[1], coef(fit_juvIV)[1], coef(fit_juvV)[1], coef(fit_aduI)[1], coef(fit_aduII)[1])
 factors = c(coef(fit_JuvI)[2], coef(fit_juvII)[2], coef(fit_juvIII)[2], coef(fit_juvIV)[2], coef(fit_juvV)[2], coef(fit_aduI)[2], coef(fit_aduII)[2])
 
-fits_df = data.frame( row.names = sizeClass_names, intercept = intercepts, factor = factors)
+sizeClass_means_reduced = sizeClass_means[1:length(sizeClass_means)-1]
+
+fits_df = data.frame( row.names = sizeClass_means_reduced, intercept = intercepts, factor = factors)
 
 #check weather intercepts show any relation with the mean size of the class:
 
 #The intercept doesn't seem to follow any relytion with the mean of the size class....
 #we may work only with the mean of all itnercepts as the range is not that big:
 mean_intercept = mean(fits_df$intercept)
+
 #OR linear regression
-fit_intercepts = lm(fits_df$intercept ~ sizeClass_means)
+fit_intercepts = lm(fits_df$intercept ~ sizeClass_means_reduced)
 summary(fit_intercepts)
 
-plot(1:length(sizeClass_names), fits_df$intercept)
+plot(1:(length(sizeClass_names)-1), fits_df$intercept)
 abline(h= mean(fits_df$intercept), lty=2 )
-lines(1:length(sizeClass_names), predict(fit_intercepts), col = 'orange3')
+lines(1:(length(sizeClass_names)-1), predict(fit_intercepts), col = 'orange3')
 
 
 #check weather factors show any relation with the mean size of the class:
-plot(1:length(sizeClass_names), fits_df$factor, col = 'red', ylim = c(-0.05, 0.8))
-lines( 1:length(sizeClass_names), sizeClass_means/10)
+plot(1:length(sizeClass_means_reduced), fits_df$factor, col = 'red', ylim = c(-0.05, 0.8))
+lines( 1:length(sizeClass_means_reduced), sizeClass_means_reduced/10)
 #there might be some
 
-fit_factorts = nls(fits_df$factor ~ a * exp(b * sizeClass_means), start = list(a = 0.05, b = 0.2))
+fit_factorts = nls(fits_df$factor ~ a * exp(b * sizeClass_means_reduced), start = list(a = 0.05, b = 0.2))
 summary(fit_factorts)
 
-plot(1:length(sizeClass_names), fits_df$factor)
-lines(1:length(sizeClass_names), predict(fit_factorts), col = 'lightblue4', lwd = 2)
+plot(1:length(sizeClass_means_reduced), fits_df$factor)
+lines(1:length(sizeClass_means_reduced), predict(fit_factorts), col = 'lightblue4', lwd = 2)
 
 #### GROWTH FUNCTION OPTION 1 ####
 #here we use the intercept and factor as funciton of L mean
 
 #check 2 Juv classes and 1 adult
-func_intercept_juvII = mean_intercept #-0.522060 + LJ2*0.006774
-func_factor_juvII = 0.022447 * exp(0.306237 * LJ2) #0.06734 * exp(0.30622*LJ2)
-func_toPlot = func_intercept_juvII + func_factor_juvII*(1/k_vals)
-
-func_intercept_juvIV = mean_intercept #-0.522060 + LJ4*0.006774
-func_factor_juvIV = 0.022447 * exp(0.306237 * LJ4) #0.06734 * exp(0.30622*LJ4)
-func_toPlot_juvIV = func_intercept_juvIV + func_factor_juvIV*(1/k_vals)
-
-func_intercept_adultI = mean_intercept # -0.522060 + LA1*0.006774
-func_factor_adultI = 0.022447 * exp(0.306237 * LA1) #0.06734 * exp(0.30622*LA1)
-func_toPlot_adultI = func_intercept_adultI + func_factor_adultI*(1/k_vals)
-
-
-par(mfrow = c(3,2))
-
-#subplot 1
-plot(temperature_range,  1 / (fits_df['LJ', 'intercept'] + fits_df['LJ', 'factor']*(1/k_vals) ),
-     main = 'growth Juv I vs function', ylim = c(0, 0.6), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
-lines(temperature_range, growth_optionA(LJ, temperature_range, 'F') , col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"), cex = )
-
-
-#subplot 2
-plot(temperature_range,  1 / (fits_df['LJ2', 'intercept'] + fits_df['LJ2', 'factor']*(1/k_vals) ),
-     main = 'growth Juv II vs function', ylim = c(0, 0.28), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
-lines(temperature_range, 1/func_toPlot , col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"), cex = )
-
-
-#subplot 3
-plot(temperature_range,  1 / (fits_df['LJ4', 'intercept'] + fits_df['LJ4', 'factor']*(1/k_vals) ),
-     main = 'growth Juv IV vs function', ylim = c(0,  0.28), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5)
-lines(temperature_range, growth_optionA(LJ4, temperature_range, 'F')  , col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
-
-#subplot 4
-plot(temperature_range,  1 / (fits_df['LJ5', 'intercept'] + fits_df['LJ5', 'factor']*(1/k_vals) ),
-     main = 'growth Juv V vs function', ylim = c(0,  0.28), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5)
-lines(temperature_range, growth_optionA(LJ5, temperature_range, 'F'), col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
-
-#subplot 5
-plot(temperature_range,  1 / (fits_df['LA1', 'intercept'] + fits_df['LA1', 'factor']*(1/k_vals) ),
-     main = 'growth Adult I vs function', ylim = c(0,  0.28), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5)
-lines(temperature_range, growth_optionA(LA1, temperature_range, 'F') , col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
-
-#subplot 5
-plot(temperature_range,  1 / (fits_df['LA2', 'intercept'] + fits_df['LA2', 'factor']*(1/k_vals) ),
-     main = 'growth Adult II vs function', ylim = c(0,  0.28), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5)
-lines(temperature_range, growth_optionA(LA2, temperature_range, 'F'), col = 'red3' , lwd = 1.8)
-legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
-
-
-
-
 growth_optionA = function(L_mean, temperature, sex){
   intercept = -0.4968367 #-0.522060 + L_mean*0.006774
   factor = 0.022447 * exp(0.306237 * L_mean) #0.06734 * exp(0.30622*L_mean)
@@ -487,12 +433,86 @@ growth_optionA = function(L_mean, temperature, sex){
 
 
 
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+ind = 1
+for (i in sizeClass_names){
+  plot(temperature_range,  1 / (fits_df[i, 'intercept'] + fits_df[i, 'factor']*(1/k_vals) ),
+       main = paste('growth', i ,'vs function'), ylim = c(0, 0.6), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+  lines(temperature_range, growth_optionA(sizeClass_means[ind], temperature_range, 'F') , col = 'red3' , lwd = 1.8)
+  ind = ind + 1
+}
+
+
+plot.new()  # empty plot
+legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
+
+plot(temperature_range,  1 / (fits_df['LJ', 'intercept'] + fits_df['LJ', 'factor']*(1/k_vals) ),
+     main = paste('growth', i ,'vs function'), ylim = c(0, 0.6), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+
+#test with L = 1 cm:
+
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 0.6 #cm
+  for (j in time_range){
+    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_juvI[as.character(i)] <- development
+}
+
+development.df_juvI = development.df_juvI[ , !(names(development.df_juvI) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_juvI <- sapply(development.df_juvI, function(col){
+  BrownShrimp::count_devDays(col, juvI_min, juvI_max) } )
+
+
+plot(temperature_range,  growth_optionA(1, temperature_range, 'F'),
+     main = 'growth Juv I vs function', ylim = c(0, 0.6), ylab = "growth rate",
+     las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+
+
+
+
+#test LJ -> with 40%
+
+growth_optionB = function(L_mean, temperature, L_rangeSize, sex){
+  intercept = -0.4968367*L_rangeSize #-0.522060 + L_mean*0.006774
+  factor = (0.022447 * exp(0.306237 * L_mean))*L_rangeSize #0.06734 * exp(0.30622*L_mean)
+  k = K_func(temperature)
+  return(1/ (intercept + factor*(1/k)) )
+}
+
+rangeSizes = c(juvI_min - juvI_max, juvII_min - juvII_max, juvIII_min - juvIII_max, juvIV_min - juvIV_max, juvV_min - juvV_max,
+               adultI_min - adultI_max, adultII_min - adultII_max, adultIII_min - adultIII_max)*-1
+
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+ind = 1
+for (i in sizeClass_names){
+  plot(temperature_range,  1 / (fits_df[i, 'intercept'] + fits_df[i, 'factor']*(1/k_vals) ),
+       main = paste('growth option B', i ,'vs function'), ylim = c(0, 0.6), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+  lines(temperature_range, growth_optionB(sizeClass_means[ind], temperature_range, rangeSizes[ind], 'F') , col = 'red3' , lwd = 1.8)
+  ind = ind + 1
+}
+
+
+plot.new()  # empty plot
+legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
+
+
+
+
+
+
+
+
+plot(temperature_range,  1 / (fits_df['LJ', 'intercept'] + fits_df['LJ', 'factor']*(1/k_vals) ),
+     main = paste('growth TEST', i ,'vs function'), ylim = c(0, 0.8), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+lines(temperature_range, growth_optionA_40(0.8, temperature_range, 'F') , col = 'red3' , lwd = 1.8)
+
+
 plot(temperature_range,  1 / (fits_df['LJ2', 'intercept'] + fits_df['LJ2', 'factor']*(1/k_vals) ),
-     main = 'growth JuvI vs function', ylim = c(0, 0.4), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
-lines(temperature_range, growth_optionA(LJ2, temperature_range, 'F') , col = 'red3' , lwd = 1.8)
-#legend("topright", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"), cex = 1)
-
-
-
-
-
+     main = paste('growth TEST', 'L=1.5' ,'vs function'), ylim = c(0, 0.8), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+lines(temperature_range, growth_optionA_40(1.5, temperature_range, 'F') , col = 'red3' , lwd = 1.8)

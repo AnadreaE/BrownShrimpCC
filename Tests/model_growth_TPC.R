@@ -1,7 +1,7 @@
 #HERE SIMULATIONS WITH NEW K-FUNC tpc FLEXBRIERE
 library(dplyr)
 library(ggplot2)
-library(cowplot) #for combined plots
+#library(cowplot) #for combined plots
 library(RColorBrewer)
 library("colorspace")
 library(deSolve)
@@ -217,7 +217,7 @@ ggplot(test_briere_long, aes(x = dateTime, y = value, color = variable)) +
   theme(plot.title = element_text(hjust = 0.5), # Center title
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
-        legend.position="bottom") + ylim(0,36) #+ xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2012-07-10", format="%Y-%m-%d", tz = "UTC") )
+        legend.position="bottom") + ylim(0,52) #+ xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2012-07-10", format="%Y-%m-%d", tz = "UTC") )
 
 
 
@@ -245,26 +245,6 @@ ggplot(df_long_testBriere, aes(x = dateTime, y = value, fill = variable)) +
   )
 
 
-## Second test Briere:
-df_long2_testBriere <- test2Briere[ , -1] %>% #delete  plancton col
-  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
-
-#ensure that vertical order is same as life stages
-stack_order_Br2 <- rev(c(colnames(test2Briere)[2:10]) )
-
-# Ensure 'variable' is a factor with levels in the same order
-df_long_testBriere$variable <- factor(df_long2_testBriere$variable, levels = stack_order_Br2)
-
-#dev.off()
-ggplot(df_long2_testBriere, aes(x = dateTime, y = value, fill = variable)) +
-  geom_area() +
-  scale_fill_viridis_d() +
-  labs(
-    title = "K func as TPC with more food",
-    x = "Date",
-    y = "Biomass",
-    fill = "Size class"
-  )
 
 
 

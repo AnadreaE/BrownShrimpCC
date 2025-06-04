@@ -423,7 +423,7 @@ ggplot(cc_2_long, aes(x = dateTime, y = value, color = variable)) +
   theme(plot.title = element_text(hjust = 0.5), # Center title
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
-        legend.position="bottom") #+ ylim(0,100)
+        legend.position="bottom") + ylim(0,20)
 
 
 ###### Barplots #######
@@ -547,7 +547,7 @@ ggplot(df_long2, aes(x = dateTime, y = value, fill = variable)) +
     x = "Date",
     y = "Biomass",
     fill = "Size class"
-  ) + ylim(0, 850)
+  ) #+ ylim(0, 850)
 
 
 #### Stacked area chart compact version ####
