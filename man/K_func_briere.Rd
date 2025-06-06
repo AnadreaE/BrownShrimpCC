@@ -4,7 +4,7 @@
 \alias{K_func_briere}
 \title{K func based of flexTPC NB: for the time being all params only for fems}
 \usage{
-K_func_briere(temperature)
+K_func_briere(temperature, sex)
 }
 \arguments{
 \item{temperature}{}

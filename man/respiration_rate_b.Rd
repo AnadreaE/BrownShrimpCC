@@ -2,7 +2,7 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{respiration_rate_b}
 \alias{respiration_rate_b}
-\title{Natural mortality}
+\title{Respiration rate}
 \usage{
 respiration_rate_b(temperature, L)
 }
@@ -15,5 +15,5 @@ respiration_rate_b(temperature, L)
 \link{gr / time }
 }
 \description{
-Natural mortality
+Respiration rate
 }

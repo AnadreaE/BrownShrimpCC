@@ -22,17 +22,26 @@ legend("topright", legend = c("Gauss", "Briere"), col = c("blue", "red"), lty = 
 
 #### CHECK NATURAL MORTALITY ####
 
-natural_mort_br <- sapply(temp_range, natural_mortality_b, 3)
-dev.off()
-plot(temp_range, natural_mortality(temp_range, 3) , type = "b", col = "blue",
+natural_mort_br <- sapply(temp_range, respiration_rate_b, 3)
+#dev.off()
+plot(temp_range, respiration_rate(temp_range, 3) , type = "b", col = "blue",
      xlab = "Temperature (°C)", ylab = " ",
      main = "natural mortality Gauss vs Briere")
 lines(temp_range, natural_mort_br, type = "b", col = 'red' , cex = 0.5)
 legend("topright", legend = c("Gauss", "Briere"), col = c("blue", "red"), lty = 1, pch = 1)
 
 
-plot(temp_range, 1/natural_mort_br) # this shape is interesting ! waht I was looking for in growth function
+#Checking when funciton returns NaN or inf or similat invalid vals
+respiration_rate_b_check = function(temperature,L){
+  mu = m*convertL_to_W(L)*K_func(temperature)# this is the rigth term of vB eq.
+  if (L>5) {
+    mu =  convertL_to_W(L) *K_func_briere(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
+  }
+  return(mu)
+}
 
+
+#### bellow lines where the try to invert nat. mortality curve, but this was proven wrong approach ####
 natural_mortality_test = function(temperature,L){
   m=3
   K_range = 0.007613879*m - 0.0005557642*m #max_K - min_K #max(sapply(temp_range, K_func))
@@ -53,7 +62,7 @@ for (i in sizes){
   lines(temp_range, sapply(temp_range, natural_mortality_test_b, i) , type = "b", col = "red", cex = 0.8)
 }
 
-
+#######
 
 K_func = function(temperature){
   #following param. vals have been estimated and docum ented in Thesis Appx. A

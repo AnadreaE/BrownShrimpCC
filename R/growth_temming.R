@@ -71,17 +71,19 @@ larvae_dev <- function(dev_status, temperature) {
 #Def function for somatic growth for Juvenile_I
 #' Somatic growth for juvenile and adult
 #'
-#' @param b_length current body length [mm]
+#' @param b_length current body length [cm]
 #' @param temperature current day temperature [°C]
-#' @param max_size asymptotic size [mm]
+#' @param max_size asymptotic size [cm]
 #' @param sex distinct param. values for male and females 'F' or 'M'.
 #'
-#' @returns new length
+#' @returns new length [cm]
 #' @export
 #'
 #' @examples sg_juv(15, 20, 85, 'F')
 
 som_growth <- function( b_length, temperature, max_size, sex){
+  b_length = b_length*10
+  max_size = max_size*10
   #Def parameters for somatic growth
   if (sex == 'F') {
     b <- 0.04028
@@ -99,5 +101,5 @@ som_growth <- function( b_length, temperature, max_size, sex){
     growth <- growth_calc
   } else {growth <- 0}
 
-  return(b_length + growth)
+  return((b_length + growth)/10)
 }

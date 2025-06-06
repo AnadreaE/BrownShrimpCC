@@ -1,22 +1,17 @@
 library(dplyr)
 library(ggplot2)
-library(cowplot) #for combined plots
 library(RColorBrewer)
 library(deSolve)
-library(patchwork)
 library(minpack.lm)
 library(BrownShrimp)
 
 ### UPLOAD AND FORMAT TEMPERATURE DATA ###
 
-temperature_ds <- read.csv("C:/Users/andre/Desktop/Hereon/Data/Wadden Sea, Penning/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
+temperature_ds <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
 #example to read from package <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
 
-#temperature_00_01 <- temperature_func(temperature_ds, "01/01/2000", "31/12/2001")
-#temperature_05_06 <- temperature_func(temperature_ds, "01/01/2005", "31/12/2006")
-#temperature_10_11 <- temperature_func(temperature_ds, "01/01/2010", "31/12/2011")
 temperature_15_16 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2016")
-#temperature_17_18 <- temperature_func(temperature_ds, "01/01/2017", "31/12/2018")
+
 
 #For the time being I will only work with data from 2010 and 2011.
 
@@ -231,6 +226,19 @@ legend("topleft",
 
 
 #### STEP (4) Again with flexTPC Briere (F and M): ####
+T_min = 0.5
+T_max = 30
+T_range = seq(T_min, T_max, by= 0.1)
+
+#Fem
+K_estimations_f_df<- data.frame(
+  temperature = temperature_range,
+  performance = K_estimations_f
+)
+
+K_estimations_f_df_filtered <- subset(K_estimations_f_df, temperature > T_min & temperature < T_max) #the fit can be applied only to data within Temperature range!
+
+
 # FEMALE
 r_max_f = max(K_estimations_f_df_filtered$performance)
 
@@ -251,6 +259,13 @@ cat("R-squared: ", RSQ_f_flexBriere, "\n")
 
 
 # MALE
+K_estimations_m_df<- data.frame(
+  temperature = temperature_range,
+  performance = K_estimations_m
+)
+
+K_estimations_m_df_filtered <- subset(K_estimations_m_df, temperature > T_min & temperature < T_max)  #the fit can be applied only to data within Temperature range!
+
 r_max_m = max(K_estimations_m_df_filtered$performance)
 
 fit_flexBriere_m <- nlsLM( performance ~  r_max_m*( (((temperature - T_min)/alpha)^alpha) * (((T_max - temperature)/ (1-alpha) )^(1-alpha)) * (1 / (T_max- T_min))  )^(alpha*(1-alpha)/beta^2) ,
@@ -288,11 +303,11 @@ temperature_15 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2015")
 #Simulation Temming size growth T data from 2015
 temming_growth_f <- c()
 temming_growth_m <- c()
-L_as_f <- 85
-L_as_m <- 55
+L_as_f <- 8.5
+L_as_m <- 5.5
 
 #simulation female
-initial_size <- 6 #mm
+initial_size <- .6 #mm
 for (i in 1:length(temperature_15$date_time) ){
   development_Temming <- som_growth(initial_size, temperature_15$temperature[i], L_as_f ,"F")
   initial_size <- development_Temming
@@ -300,7 +315,7 @@ for (i in 1:length(temperature_15$date_time) ){
 }
 
 #simulation male
-initial_size <- 6 #mm
+initial_size <- .6 #mm
 for (i in 1:length(temperature_15$date_time) ){
   development_Temming <- som_growth(initial_size, temperature_15$temperature[i], L_as_m ,'M')
   initial_size <- development_Temming
@@ -328,9 +343,9 @@ func_K <- function(T, sex) {
 system.equations <- function(t, state, parameters) {
   with(as.list(c(state, parameters)), {
     if (sex=='F'){
-      L_as = 85
+      L_as = 8.5
     } else if (sex=='M'){
-      L_as = 55
+      L_as = 5.5
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
@@ -346,7 +361,7 @@ system.equations <- function(t, state, parameters) {
 t <- seq(1, 364, 0.01)
 
 # Initial state for l
-state <- c(l = 6)  #
+state <- c(l = .6)  #
 
 
 ##Simulation Fem
@@ -426,9 +441,9 @@ temperature_15_17 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2017"
 system.equations <- function(t, state, parameters) {
   with(as.list(c(state, parameters)), {
     if (sex=='F'){
-      L_as = 85
+      L_as = 8.5
     } else if (sex=='M'){
-      L_as = 55
+      L_as = 5.5
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
@@ -448,14 +463,29 @@ cc_f_b <- ode(y = state, times = t3, func = system.equations, parms = parameters
 cc_f_b <- as.data.frame(cc_f_b)
 head(cc_f_b)
 
+#Simulate somatic Growth thesis function:
+
+growth_thesis_f <- c()
+
+initial_l = 0.6
+time = 0
+for (i in temperature_15_17$temperature){
+  growth = som_growth_thesis(initial_l, time ,i , "F")
+  growth_thesis_f = append(growth_thesis_f, growth)
+  time = time +1
+}
+
+
+
+
 #Simulate Temming again 2 years
 temming_growth_f <- c()
 temming_growth_m <- c()
-L_as_f <- 85
-L_as_m <- 55
+L_as_f <- 8.5
+L_as_m <- 5.5
 
 #simulation female
-initial_size <- 6 #mm
+initial_size <- .6 #cm
 for (i in 1:length(temperature_15_17$date_time) ){
   development_Temming <- som_growth(initial_size, temperature_15_17$temperature[i], L_as_f ,"F")
   initial_size <- development_Temming
@@ -467,11 +497,11 @@ for (i in 1:length(temperature_15_17$date_time) ){
 female_plot_b <- ggplot() +
   geom_point(aes(x = 1: length(temperature_15_17$temperature), y = temming_growth_f, color = "Empirical function"),
              size = 2, shape = 21, fill = "gray") +  # Use points for temperature growth data
-  geom_line(aes(x = cc_f_b$time, y = cc_f_b$l, color = "Analytical model"),
+  geom_line(aes(x = 1:length(temperature_15_17$date_time) , y = growth_thesis_f, color = "Thesis model"),
             size = 0.75) +  # Line for cc_f
   labs(x = "Day of Year", y = "Length (mm)", title = "Female Growth") +
   scale_color_manual(name = "Legend",
-                     values = c("Empirical function" = "gray" , "Analytical model" = "maroon3") )+
+                     values = c("Empirical function" = "gray" , "Thesis model" = "maroon3") )+
   #labels = c("Empiric", "Analytical")) +
   theme_minimal() +
   theme(
