@@ -45,22 +45,12 @@ sizeClass_means = c(LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3 )
 
 #### Def. growth function (as function of time) ####
 
-lengthGrowth_funcTime = function (L0, time, temp, sex){ #L[cm]
-  #This funciton works only in this context i.e. to simulate growth with constant temperatures in order to
-  #compare and check plausibilty of the results.
-  L0 = L0*10
-  if (sex == "F") Linf = 85
-  if (sex == "M") Linf = 55
-  if (L0 > Linf ) growth = 0
-  else growth = Linf- (Linf-L0)*exp(-K_func_briere(temp)*3*time)
-  return(growth/10 )
-}
 
 #### Simulations ####
 time_range <- seq(1,1095)
 temperature_range <- seq(0,30, 0.1) #(10,15)
 
-k_vals = sapply(temperature_range, K_func_briere)
+k_vals = sapply(temperature_range, K_func_briere, sex = 'F')
 
 #### JUVI ####
 
@@ -71,7 +61,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 0.6 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -91,12 +81,12 @@ dev_time_juvI <- sapply(development.df_juvI, function(col){
 #With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
 plot( (1:length(dev_time_juvI))*0.1, dev_time_juvI, main = "Development days Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
 plot( (1:length(dev_time_juvI))*0.1, 1/dev_time_juvI, main = "1/Development days Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
-lines(temperature_range, k_vals, col = 'red', ldw = 2)
+lines(temperature_range, k_vals, col = 'red', lwd = 2)
 legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "red"))
 
 #Deleet values where there is no development i.e. when devTime = 1095
-indexes_1095 <- which(dev_time_juvI == 1095)
-dev_time_JUVI_reduced <- dev_time_juvI[dev_time_juvI != 1095]
+indexes_1095 <- which(dev_time_juvI == 1095 | dev_time_juvI == 0)
+dev_time_JUVI_reduced <- dev_time_juvI[dev_time_juvI != 1095 & dev_time_juvI != 0]
 temperature_range_red_juvI <- temperature_range[-indexes_1095]
 k_vals_reduced_JUVI = k_vals[-indexes_1095]
 
@@ -119,7 +109,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 1 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -134,7 +124,7 @@ dev_time_juvII <- sapply(development.df_juvII, function(col){
 
 
 #With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
-#plot( (1:length(dev_time_juvII))*0.1, dev_time_juvII, main = "Development days Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
+plot( (1:length(dev_time_juvII))*0.1, dev_time_juvII, main = "Development days Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
 plot( (1:length(dev_time_juvII))*0.1, 1/dev_time_juvII, main = "1/Development days Juvenile II \n min_size = 1 cm and max_size = 2 cm" )
 lines(temperature_range, k_vals, col = 'red', lwd = 2)
 legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "red"))
@@ -165,7 +155,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 2 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -212,7 +202,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 3 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -257,7 +247,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 4 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -303,7 +293,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 5 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -349,7 +339,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 6 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -413,9 +403,6 @@ lines(1:(length(sizeClass_names)-1), predict(fit_intercepts), col = 'orange3')
 plot(1:length(sizeClass_means_reduced), fits_df$factor, col = 'red', ylim = c(-0.05, 0.8))
 lines( 1:length(sizeClass_means_reduced), sizeClass_means_reduced/10)
 
-plot(1:length(sizeClass_means_reduced), fits_df$factor)
-lines(1:length(sizeClass_means_reduced), predict(fit_factorts), col = 'lightblue4', lwd = 2)
-
 #fit_factorts = nls(fits_df$factor ~ a * exp(b * sizeClass_means_reduced), start = list(a = 0.05, b = 0.2))
 logx = log(sizeClass_means_reduced)
 logy = log(fits_df$factor)
@@ -432,19 +419,16 @@ a_est <- exp(log_a)
 plot(sizeClass_means_reduced, fits_df$factor, log = 'xy')
 lines(sizeClass_means_reduced, a_est * sizeClass_means_reduced^b_est, col = 'red')
 
-lines(logx, log_a  +  logx*b_est, col = 'red')
-
 plot(sizeClass_means_reduced, fits_df$factor)
 lines(sizeClass_means_reduced, a_est * sizeClass_means_reduced^b_est, col = 'red')
 
 #### GROWTH FUNCTION OPTION 1 ####
-#here we use the intercept and factor as funciton of L mean
+#here we use the factor as funciton of L mean and only the mean of the intercept:
 
-#check 2 Juv classes and 1 adult
 growth_optionA_t = function(L_mean, temperature, sex){
   intercept = -0.4968367 #mean_intercept
   factor = a_est * L_mean^b_est #
-  k = K_func_briere(temperature)
+  k = K_func_briere(temperature, sex)
   return(1/ (intercept + factor*(1/k)) )
 }
 
@@ -462,3 +446,30 @@ for (i in sizeClass_names){
 plot.new()  # empty plot
 legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
 
+
+#### GROWTH FUNCTION OPTION 2 ####
+#here we use both factor and intercept as funciton of L mean:
+
+growth_optionB_t = function(L_mean, temperature, sex){
+  intercept = -0.530907 + L_mean*0.007645 #mean_intercept
+  factor = a_est * L_mean^b_est #
+  k = K_func_briere(temperature, sex)
+  return(1/ (intercept + factor*(1/k)) )
+}
+
+
+
+par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
+ind = 1
+for (i in sizeClass_names){
+  plot(temperature_range,  1 / (fits_df[i, 'intercept'] + fits_df[i, 'factor']*(1/k_vals) ),
+       main = paste('growth', i ,'vs function'), ylim = c(0, 0.6), ylab = "growth rate", las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
+  lines(temperature_range, sapply(temperature_range, growth_optionB_t, L_mean = sizeClass_means[ind], sex='F' ) , col = 'red3' , lwd = 1.8)
+  ind = ind + 1
+}
+
+plot.new()  # empty plot
+legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
+
+#CONCLUSION COMPARATION A and B:
+#No major difference, therfore so simplicity and saving computing effort I choose option A

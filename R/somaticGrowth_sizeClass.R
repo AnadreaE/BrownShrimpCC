@@ -83,7 +83,8 @@ ingestion_rate = function(temperature, L, P){
 
 molting_fraction <- function(L, temperature){
   mf = 0
-  if (L >= 5){
+  L=L*10
+  if (L >= 50){
     if (temperature <= 0 ) {} #nothing happens, mf = 0
     else if (temperature <= 16.2 && temperature > 0){ #T_opt fems= 16.2
       #mf =  (1 / (5.7066 * L^0.7364 * temperature ^(-0.09363) ) )/2  # exp(temperature*-0.09363) ) #/2 considering
@@ -157,7 +158,7 @@ natural_mortality_test = function(temperature,L){
 #'
 #' @examples
 new_food = function(t) {
-  0.2 * (2 + cos( (2*pi/ 365)*(t-172) ) )
+  0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) )
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
 }
 
@@ -256,7 +257,7 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
       IA1 = ingestion_rate(Te,LA1,P)
       sA1= spawning_rate(LA1, Te)
       mA1 = respiration_rate(Te, LA1)
-      molA1 = molting_fraction(LA1*10, Te)
+      molA1 = molting_fraction(LA1, Te)
       gA1 = shift_next_sizeClass(LA1, Te, 'F')
       dA1.dt = gJ5*J5 + IA1*A1 - mA1*A1 - sA1*A1*molA1 - gA1*A1  #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A1
 
@@ -265,7 +266,7 @@ solver_sizeClass_extended = function(t, state, parameters, temperature_dataSet){
       IA2 = ingestion_rate(Te,LA2,P)
       sA2= spawning_rate(LA2, Te)
       mA2 = respiration_rate(Te, LA2)
-      molA2 = molting_fraction(LA2*10, Te)
+      molA2 = molting_fraction(LA2, Te)
       dA2.dt = gA1*A1 + IA2*A2 - mA2*A2 - sA2*A2*molA2 #+ (1/dev_tA1(T,L))*A1 // 0.1 Fishery - 0.1*A2
 
       #Adult II

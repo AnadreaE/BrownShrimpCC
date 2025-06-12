@@ -4,7 +4,7 @@
 \alias{ingestion_rate_b}
 \title{Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)}
 \usage{
-ingestion_rate_b(temperature, L, P)
+ingestion_rate_b(temperature, L, P, sex)
 }
 \arguments{
 \item{temperature}{Temperature \link{°C}}
@@ -20,5 +20,5 @@ growth rate in weight \link{gr / time }
 Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 }
 \examples{
-ingestion_rate(temperature = 15, L = 55, P)
+ingestion_rate(temperature = 15, L = 55, P=2, sex = 'F')
 }

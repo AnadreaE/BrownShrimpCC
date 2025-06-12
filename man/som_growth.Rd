@@ -7,16 +7,16 @@
 som_growth(b_length, temperature, max_size, sex)
 }
 \arguments{
-\item{b_length}{current body length \link{mm}}
+\item{b_length}{current body length \link{cm}}
 
 \item{temperature}{current day temperature \link{°C}}
 
-\item{max_size}{asymptotic size \link{mm}}
+\item{max_size}{asymptotic size \link{cm}}
 
 \item{sex}{distinct param. values for male and females 'F' or 'M'.}
 }
 \value{
-new length
+new length \link{cm}
 }
 \description{
 Somatic growth for juvenile and adult

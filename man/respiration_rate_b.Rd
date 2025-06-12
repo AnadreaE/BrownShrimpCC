@@ -4,7 +4,7 @@
 \alias{respiration_rate_b}
 \title{Respiration rate}
 \usage{
-respiration_rate_b(temperature, L)
+respiration_rate_b(temperature, L, sex)
 }
 \arguments{
 \item{temperature}{Temperature \link{°C}}

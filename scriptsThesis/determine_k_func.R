@@ -15,27 +15,11 @@ temperature_15_16 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2016"
 
 #For the time being I will only work with data from 2010 and 2011.
 
-#### EGG DEVELOPMENT #####
-egg_development_array <- c()
-hatch_status_array <- c()
-initial_status_egg <- 0
-
-#first_day_egg <- egg_dev(initial_status_egg, temperature_15_16$temperature[1])
-#initial_status_egg <- first_day_egg[[1]]
-
-for (i in 1:length(temperature_15_16$temperature) ){
-  egg_development <- egg_dev(initial_status_egg, temperature_15_16$temperature[i])
-  initial_status_egg <- egg_development[[1]]
-  hatch_status_array <- append(hatch_status_array, egg_development[[2]] )
-  egg_development_array <- append(egg_development_array, initial_status_egg)
-}
-
-
 #### SOMATIC GROWTH (FROM 6 MM) ####
 temperature_range <- seq(0, 30, 0.1)
 days <- seq(1, length(temperature_15_16$temperature))
-L_as_f <- 85 #mm
-L_as_m <- 55 #mm
+L_as_f <- 8.5 #cm
+L_as_m <- 5.5 #cm
 
 #FEMALES
 #STEP(1) Temmings simulations with constant temperatures
@@ -43,7 +27,7 @@ L_as_m <- 55 #mm
 growth_fem <- data.frame(days=seq(1, length(temperature_15_16$temperature)))
 
 for (j in temperature_range){
-  initial_l <- 6 #mm
+  initial_l <- .6 #cm
   development <- c()
   for (i in 1:length(temperature_15_16$temperature)) {
     new_legth <- som_growth(initial_l, j, L_as_f, 'F')
@@ -81,7 +65,7 @@ T_opt <- which.max(K_estimations_f)*0.1 #this is the T_opt
 growth_masc <- data.frame(days=seq(1, length(temperature_15_16$temperature)))
 
 for (j in temperature_range){
-  initial_l <- 6 #mm
+  initial_l <- .6 #cm
   development <- c()
   for (i in 1:length(temperature_15_16$temperature)) {
     new_legth <- som_growth(initial_l, j, L_as_m, 'M')
@@ -423,7 +407,7 @@ print(male_plot)
 ############ VALIDATION OF K(T) *Andersen with flexTCP vs Temming* ###############
 func_K_briere <- function(temperature) { #refers for the time being only females
   r_max_f = 0.007638409
-  T_min = 0.4
+  T_min = 0.5
   T_max = 30
   alpha = 0.541524
   beta = 0.276430
@@ -447,7 +431,7 @@ system.equations <- function(t, state, parameters) {
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
-    K <- func_K_briere(temperature_15_17$temperature[floor(t)])  # Access temperature for the current time
+    K <- K_func_briere(temperature_15_17$temperature[floor(t)], 'F')  # Access temperature for the current time. K_func_briere from implementation in Bib
     dl.dt <- K * (L_as - l)  # Differential equation
 
     return(list(dl.dt))  # Return the rate of change
@@ -456,7 +440,8 @@ system.equations <- function(t, state, parameters) {
 
 t2 = seq(1, 730, 0.01)
 t3 = seq(1, 1095, 0.01)
-
+# Initial state for l
+state <- c(l = .6)
 ##Simulation Fem
 parameters <- list(sex='F')
 cc_f_b <- ode(y = state, times = t3, func = system.equations, parms = parameters)# Solve the ODE
@@ -474,8 +459,6 @@ for (i in temperature_15_17$temperature){
   growth_thesis_f = append(growth_thesis_f, growth)
   time = time +1
 }
-
-
 
 
 #Simulate Temming again 2 years
@@ -497,8 +480,9 @@ for (i in 1:length(temperature_15_17$date_time) ){
 female_plot_b <- ggplot() +
   geom_point(aes(x = 1: length(temperature_15_17$temperature), y = temming_growth_f, color = "Empirical function"),
              size = 2, shape = 21, fill = "gray") +  # Use points for temperature growth data
-  geom_line(aes(x = 1:length(temperature_15_17$date_time) , y = growth_thesis_f, color = "Thesis model"),
-            size = 0.75) +  # Line for cc_f
+  #geom_line(aes(x = 1:length(temperature_15_17$date_time) , y = growth_thesis_f, color = "Thesis model"),
+  #          size = 0.75) +  # Line for cc_f
+  geom_line(aes(x = cc_f_b$time , y = cc_f_b$l, color = "Thesis model") ) +
   labs(x = "Day of Year", y = "Length (mm)", title = "Female Growth") +
   scale_color_manual(name = "Legend",
                      values = c("Empirical function" = "gray" , "Thesis model" = "maroon3") )+
@@ -513,5 +497,59 @@ female_plot_b <- ggplot() +
   )
 
 print(female_plot_b)
+
+
+
+
+############ VALIDATION OF K(T) *flexTCP vs K_vals*
+
+#Compute K_vals with thesis function Fem:
+
+K_vals_thesis_f = sapply(temperature_range, K_func_briere, sex= 'F')
+
+K_vals_thesis_m = sapply(temperature_range, K_func_briere, sex= 'M')
+
+RSS_f <- sum((K_estimations_f - K_vals_thesis_f )^2)
+# Calculate total sum of squares (TSS)
+TSS_f <- sum((K_estimations_f - mean(K_estimations_f))^2)
+R_squared_f <- 1 - (RSS_f / TSS_f)
+R_squared_f
+
+
+RSS_m <- sum((K_estimations_m - K_vals_thesis_m )^2)
+# Calculate total sum of squares (TSS)
+TSS_m <- sum((K_estimations_m - mean(K_estimations_m))^2)
+R_squared_m <- 1 - (RSS_m / TSS_m)
+R_squared_m
+
+
+
+#PLOT
+dev.off()
+layout_matrix <- matrix(c(1, 2, 3), nrow = 1, byrow = TRUE)
+# Define relative widths
+layout(layout_matrix, widths = c(3, 3, 1.5))  # 3:3:1 means third column is narrower
+
+# Plot 1 (Females)
+par(mar = c(5, 6, 4, 2))  # Adjust margin to give space for large ylabel
+plot(temperature_range, K_estimations_f, main = 'Females', col = 'gray41', ylab = "K", xlab = "Temperature",
+     las = 1, cex.main = 2, cex.lab = 2, cex.axis = 2, lwd = 1.5)
+lines(temperature_range, K_vals_thesis_f, col = 'maroon' , lwd = 3)
+
+# Plot 2 (Males)
+par(mar = c(5, 6, 4, 2))  # Adjust margin to give space for large ylabel
+plot(temperature_range, K_estimations_m, main = 'Males', col = 'gray41', ylab = "K", xlab = "Temperature",
+     las = 1, cex.main = 2, cex.lab = 2, cex.axis = 2, lwd = 1.5)
+lines(temperature_range, K_vals_thesis_m, col = 'dodgerblue4', lwd = 3)
+
+# Plot 3 — Legend
+par(mar = c(0, 0, 0, 0))   # << this forces the legend to fill the panel nicely
+plot.new()
+legend("left", legend = c("Est. K-vals", "K-funct. F", "K-funct. M"),
+       col = c("gray41", "maroon", 'dodgerblue4'), lwd = c(2, 2, 2), bty = "n", cex = 1.75)
+
+mtext("K estimated values vs function flexTPC", outer = TRUE, cex = 2.5)
+
+
 
 

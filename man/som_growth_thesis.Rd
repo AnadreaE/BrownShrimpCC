@@ -7,13 +7,13 @@
 som_growth_thesis(L0, time, temp, sex)
 }
 \arguments{
+\item{L0}{initial or current size \link{cm}}
+
 \item{time}{time step}
 
 \item{sex}{'F' or 'M'}
 
 \item{Tem}{temperature \link{°C}}
-
-\item{L}{current size \link{cm}}
 }
 \value{
 new size after gorwth dependent on temperature
@@ -22,14 +22,14 @@ new size after gorwth dependent on temperature
 Somatic growth developed in this Thesis as function of time
 }
 \examples{
-som_growthAF(3, 10, "F") or:
+som_growth_thesis(3, 1, 5,"F") or:
 development.df_juvI <- data.frame(row = seq(1, 1095))
 simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
 for (i in temperature_range){
   development <- c()
   initial_l <- 0.6 #cm
   for (j in time_range){
-    growth = lengthGrowth_funcTime(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , "F")
     development = append(development, growth) }
 development.df_juvI[as.character(i)] <- development }
 

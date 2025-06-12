@@ -87,8 +87,8 @@ K_func_briere_t = function(temperature){
   return(toReturn)
 }
 
-#### CHECK SPAWNING ####
-
+#### CHECK FUNCTIONAL RESPONSE ####
+#**PENDING !!!
 
 
 
