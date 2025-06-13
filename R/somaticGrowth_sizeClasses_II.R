@@ -7,9 +7,10 @@
 
 ##### constant parameter values: #####
 
-attac_rate = 0.25
-handling_time = 22
-alpha_ir = 1/(attac_rate*handling_time)
+attac_rate = 0.264 #from avg. reported by Andersen Brown functional response to density   old val:0.25
+handling_time = 22 #from avg. reported by Andersen Brown functional response to density
+#alpha_ir = 1/(attac_rate*handling_time) #same as above & for an are of 209 cm2 ~8.238 for 1m2
+alpha_ir = 8.238
 #L_inf_f = 8.5
 #L_inf_f = 5.5
 epsilon = 0.22
@@ -91,9 +92,8 @@ ingestion_rate_b = function(temperature, L, P, sex){
   if (sex == 'M') L_infty = 5.5
   #result = m*K_func_briere(temperature, sex)*convertL_to_W(L)*L_infty*(c_div)^(1/m)*( P/(P+alpha_ir) )
   w = convertL_to_W(L)
-  result = m*K_func_briere(temperature, sex)*(L_infty/L)*w^(1/4)*( P/(P+alpha_ir) )
+  result = m*K_func_briere(temperature, sex)*(L_infty/L)*( P/(P+alpha_ir) )
   #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
-  #1.14*K_func(T)*(L_inf/ L)^n *P/(P+h)
   return (result)
 }
 
@@ -175,6 +175,9 @@ shift_next_sizeClass = function(L_mean, temperature, sex){
     intercept = -0.4968367 #-0.522060 + L_mean*0.006774
     k = K_func_briere(temperature, 'F')
   } else if (sex == 'M'){
+    intercept = -0.5066616
+    a_est_factor = 0.1192449
+    b_est_factor = 1.328571
     #calculations for a and b pending
     k = K_func_briere(temperature, 'M')
   }
@@ -316,7 +319,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Juv I M
       IJ_m = ingestion_rate_b(Te, LJ, P, 'M')
       mJ_m = respiration_rate_b(Te, LJ, 'M')
-      gJI_m = shift_next_sizeClass(LJ, Te, 'F')
+      gJI_m = shift_next_sizeClass(LJ, Te, 'M')
       dJ_m.dt = gL*L*0.5 + IJ_m*J_m - mJ_m*J_m - gJI_m*J_m
 
       #Juv II F
@@ -328,7 +331,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Juv II M
       IJ2_m = ingestion_rate_b(Te,LJ2,P, 'M')
       mJ2_m = respiration_rate_b(Te, LJ2, 'M')
-      gJ2_m = shift_next_sizeClass(LJ2, Te, 'F')
+      gJ2_m = shift_next_sizeClass(LJ2, Te, 'M')
       dJ2_m.dt = gJI_m*J_m + IJ2_m*J2_m - mJ2_m*J2_m - gJ2_m*J2_m
 
       #Juv III F
@@ -340,7 +343,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Juv III M
       IJ3_m = ingestion_rate_b(Te, LJ3, P, 'M')
       mJ3_m = respiration_rate_b(Te, LJ3, 'M')
-      gJ3_m = shift_next_sizeClass(LJ3, Te, 'F')
+      gJ3_m = shift_next_sizeClass(LJ3, Te, 'M')
       dJ3_m.dt = gJ2_m*J2_m + IJ3_m*J3_m - mJ3_m*J3_m - gJ3_m*J3_m
 
 
@@ -353,7 +356,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Juv IV M
       IJ4_m = ingestion_rate_b(Te, LJ4, P, 'M')
       mJ4_m = respiration_rate_b(Te, LJ4, 'M')
-      gJ4_m = shift_next_sizeClass(LJ4, Te, 'F')
+      gJ4_m = shift_next_sizeClass(LJ4, Te, 'M')
       dJ4_m.dt = gJ3_m*J3_m + IJ4_m*J4_m - mJ4_m*J4_m - gJ4_m*J4_m
 
 
@@ -366,7 +369,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Juv V M
       IJ5_m = ingestion_rate_b(Te, LJ5, P, 'M')
       mJ5_m = respiration_rate_b(Te, LJ5, 'M')
-      gJ5_m = shift_next_sizeClass(LJ5, Te, 'F')
+      gJ5_m = shift_next_sizeClass(LJ5, Te, 'M')
       dJ5_m.dt = gJ4_m*J4_m + IJ5_m*J5_m - mJ5_m*J5_m - gJ5_m*J5_m
 
 
@@ -381,7 +384,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       #Adult I M
       IA1_m = ingestion_rate_b(Te, LA1, P, 'M')
       mA1_m = respiration_rate_b(Te, LA1, 'M')
-      gA1_m = shift_next_sizeClass(LA1, Te, 'F')
+      gA1_m = shift_next_sizeClass(LA1, Te, 'M')
       dA1_m.dt = gJ5_m*J5_m + IA1_m*A1_m - mA1_m*A1_m - gA1_m*A1_m #they actiually don't growth no a next size class, but let's say this is mortality, they growth old
 
 

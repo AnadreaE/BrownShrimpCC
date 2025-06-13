@@ -5,6 +5,8 @@ library(deSolve)
 library(RColorBrewer)
 library(BrownShrimp)
 library(viridis)
+library(dplyr)
+library(tidyr)
 
 #library(devtools)
 
@@ -85,7 +87,7 @@ test_sex_long <- test_sex %>%
 #dev.off()
 ggplot(test_sex_long, aes(x = dateTime, y = value, color = variable)) +
   geom_line(size = 1) +  # Plot lines
-  labs(title = " extended size classes F and M \n 2010-2014", x = "Days", y = "Biomass") +
+  labs(title = " TPC-sex F and M \n 2010-2014", x = "Days", y = "Biomass") +
   scale_color_manual(
 
     values = c( "P" = "#d9f0a3", "E"= "#1c9099" ,"L" = "gray"  ,
@@ -97,7 +99,7 @@ ggplot(test_sex_long, aes(x = dateTime, y = value, color = variable)) +
   theme(plot.title = element_text(hjust = 0.5), # Center title
         axis.title.x = element_text(size = 16),
         axis.title.y = element_text(size = 16),
-        legend.position="bottom") + ylim(0, 100) #+ xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2012-07-10", format="%Y-%m-%d", tz = "UTC") )
+        legend.position="bottom") #+ ylim(0, 100) #+ xlim( as.POSIXct("2010-04-01", format="%Y-%m-%d", tz = "UTC") , as.POSIXct("2012-07-10", format="%Y-%m-%d", tz = "UTC") )
 
 
 
@@ -118,7 +120,7 @@ ggplot(df_long_testSex, aes(x = dateTime, y = value, fill = variable)) +
   geom_area() +
   scale_fill_viridis_d() +
   labs(
-    title = "K func as TPC",
+    title = "TPC sex",
     x = "Date",
     y = "Biomass",
     fill = "Size class"

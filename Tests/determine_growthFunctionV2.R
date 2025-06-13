@@ -43,12 +43,10 @@ LA3 = (adultIII_min + adultIII_max)/2
 sizeClass_names = c("LJ", "LJ2", "LJ3", "LJ4", "LJ5", "LA1", "LA2", "LA3" )
 sizeClass_means = c(LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3 )
 
-#### Def. growth function (as function of time) ####
-
-
-#### Simulations ####
 time_range <- seq(1,1095)
 temperature_range <- seq(0,30, 0.1) #(10,15)
+
+#### Simulations FEMALES ####
 
 k_vals = sapply(temperature_range, K_func_briere, sex = 'F')
 
@@ -473,3 +471,323 @@ legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "
 
 #CONCLUSION COMPARATION A and B:
 #No major difference, therfore so simplicity and saving computing effort I choose option A
+
+
+
+#### Simulations MALES ####
+
+k_vals_M = sapply(temperature_range, K_func_briere, sex = 'M')
+
+#### M JUVI  ####
+
+Mdevelopment.df_juvI <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 0.6 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  Mdevelopment.df_juvI[as.character(i)] <- development
+}
+
+Mdevelopment.df_juvI = Mdevelopment.df_juvI[ , !(names(Mdevelopment.df_juvI) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MjuvI <- sapply(Mdevelopment.df_juvI, function(col){
+  BrownShrimp::count_devDays(col, juvI_min, juvI_max) } )
+
+#dev_time_juvI <- dev_time_juvI[-c(1)] #delete first element cuz doesn't make sense
+#dev.off()
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+plot( (1:length(dev_time_MjuvI))*0.1, dev_time_MjuvI, main = "Development days Male Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
+plot( (1:length(dev_time_MjuvI))*0.1, 1/dev_time_MjuvI, main = "1/Development days Juvenile I \n min_size = 0.6 cm and max_size = 1 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MjuvI == 1095 | dev_time_MjuvI == 0)
+dev_time_MJUVI_reduced <- dev_time_MjuvI[dev_time_MjuvI != 1095 & dev_time_MjuvI != 0]
+temperature_range_red_MjuvI <- temperature_range[-indexes_1095]
+k_vals_reduced_MJUVI = k_vals_M[-indexes_1095]
+
+devTime_MjuvI_inv_reduced = 1/dev_time_MJUVI_reduced
+k_vals_reduced_MJUVI_inv = 1/k_vals_reduced_MJUVI
+
+fit_M.JuvI = lm(dev_time_MJUVI_reduced ~ k_vals_reduced_MJUVI_inv )
+summary(fit_M.JuvI)
+
+plot( (1:length(dev_time_MjuvI))*0.1, dev_time_MjuvI, main = "Development days Juvenile M vs fit I \n min_size = 0.6 cm and max_size = 1 cm" )
+lines(temperature_range_red_MjuvI, predict(fit_M.JuvI), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#### M JUV II ####
+
+development.df_MjuvII <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 1 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_MjuvII[as.character(i)] <- development
+}
+
+development.df_MjuvII = development.df_MjuvII[ , !(names(development.df_MjuvII) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MjuvII <- sapply(development.df_MjuvII, function(col){
+  BrownShrimp::count_devDays(col, juvII_min, juvII_max) } )
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+plot( (1:length(dev_time_MjuvII))*0.1, dev_time_MjuvII, main = "Development days Juvenile II \n min_size = 1 cm and max_size = 2 cm" )
+plot( (1:length(dev_time_MjuvII))*0.1, 1/dev_time_MjuvII, main = "1/Development days Juvenile II \n min_size = 1 cm and max_size = 2 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MjuvII == 1095)
+dev_time_MjuvII_reduced <- dev_time_MjuvII[dev_time_MjuvII != 1095]
+temperature_range_red_MjuvII <- temperature_range[-indexes_1095]
+k_vals_reduced_MjuvII = k_vals_M[-indexes_1095]
+
+devTime_MjuvII_inv_reduced = 1/dev_time_MjuvII_reduced
+k_vals_reduced_MjuvII_inv = 1/k_vals_reduced_MjuvII
+
+fit_MjuvII = lm(dev_time_MjuvII_reduced ~ k_vals_reduced_MjuvII_inv )
+summary(fit_MjuvII)
+
+plot( (1:length(dev_time_MjuvII))*0.1, dev_time_MjuvII, main = "Development days Juvenile II vs fit \n min_size = 1 cm and max_size = 2 cm" )
+lines(temperature_range_red_MjuvII, predict(fit_MjuvII), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "#1c9099"))
+
+
+#### M JUV III ####
+
+development.df_MjuvIII <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 2 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_MjuvIII[as.character(i)] <- development
+}
+
+development.df_MjuvIII = development.df_MjuvIII[ , !(names(development.df_MjuvIII) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MjuvIII <- sapply(development.df_MjuvIII, function(col){
+  BrownShrimp::count_devDays(col, juvIII_min, juvIII_max) } )
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+#plot( (1:length(dev_time_MjuvIII))*0.1, dev_time_MjuvIII, main = "Development days Juvenile III \n min_size = 0.6 cm and max_size = 1 cm" )
+plot( (1:length(dev_time_MjuvIII))*0.1, 1/dev_time_MjuvIII, main = "1/Development days Juvenile III \n min_size = 2 cm and max_size = 3 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MjuvIII == 1095)
+dev_time_MjuvIII_reduced <- dev_time_MjuvIII[dev_time_MjuvIII != 1095]
+temperature_range_red_MjuvIII <- temperature_range[-indexes_1095]
+k_vals_reduced_MjuvIII = k_vals_M[-indexes_1095]
+
+devTime_MjuvIII_inv_reduced = 1/dev_time_MjuvIII_reduced
+k_vals_reduced_MjuvIII_inv = 1/k_vals_reduced_MjuvIII
+
+fit_MjuvIII = lm(dev_time_MjuvIII_reduced ~ k_vals_reduced_MjuvIII_inv )
+summary(fit_MjuvIII)
+
+plot( (1:length(dev_time_MjuvIII))*0.1, dev_time_MjuvIII, main = "Development days Juvenile III vs fit \n min_size = 2 cm and max_size = 3 cm" )
+lines(temperature_range_red_MjuvIII, predict(fit_MjuvIII), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "#1c9099"))
+
+
+
+#### M JUV IV ####
+
+development.df_MjuvIV <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 3 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_MjuvIV[as.character(i)] <- development
+}
+
+development.df_MjuvIV = development.df_MjuvIV[ , !(names(development.df_MjuvIV) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MjuvIV <- sapply(development.df_MjuvIV, function(col){
+  BrownShrimp::count_devDays(col, juvIV_min, juvIV_max) } )
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+#plot( (1:length(dev_time_MjuvIV))*0.1, dev_time_MjuvIV, main = "Development days Juvenile IV \n min_size = 3 cm and max_size = 4 cm" )
+plot( (1:length(dev_time_MjuvIV))*0.1, 1/dev_time_MjuvIV, main = "1/Development days Juvenile IV \n min_size = 3 cm and max_size = 4 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MjuvIV == 1095)
+dev_time_MjuvIV_reduced <- dev_time_MjuvIV[dev_time_MjuvIV != 1095]
+temperature_range_red_MjuvIV <- temperature_range[-indexes_1095]
+k_vals_reduced_MjuvIV = k_vals_M[-indexes_1095]
+
+devTime_MjuvIV_inv_reduced = 1/dev_time_MjuvIV_reduced
+k_vals_reduced_MjuvIV_inv = 1/k_vals_reduced_MjuvIV
+
+fit_MjuvIV = lm(dev_time_MjuvIV_reduced ~ k_vals_reduced_MjuvIV_inv )
+summary(fit_MjuvIV)
+
+plot( (1:length(dev_time_MjuvIV))*0.1, dev_time_MjuvIV, main = "Development days Juvenile IV vs fit \n min_size = 3 cm and max_size = 4 cm" )
+lines(temperature_range_red_MjuvIV, predict(fit_MjuvIV), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "#1c9099"))
+
+#### M JUV V ####
+
+development.df_MjuvV <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 4 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_MjuvV[as.character(i)] <- development
+}
+
+development.df_MjuvV = development.df_MjuvV[ , !(names(development.df_MjuvV) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MjuvV <- sapply(development.df_MjuvV, function(col){
+  BrownShrimp::count_devDays(col, juvV_min, juvV_max) } )
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+#plot( (1:length(dev_time_MjuvV))*0.1, dev_time_MjuvV, main = "Development days Juvenile V \n min_size = 4 cm and max_size = 5 cm" )
+plot( (1:length(dev_time_MjuvV))*0.1, 1/dev_time_MjuvV, main = "1/Development days Juvenile V \n min_size = 4 cm and max_size = 5 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MjuvV == 1095)
+dev_time_MjuvV_reduced <- dev_time_MjuvV[dev_time_MjuvV != 1095]
+temperature_range_red_MjuvV <- temperature_range[-indexes_1095]
+k_vals_reduced_MjuvV = k_vals_M[-indexes_1095]
+
+devTime_MjuvV_inv_reduced = 1/dev_time_MjuvV_reduced
+k_vals_reduced_MjuvV_inv = 1/k_vals_reduced_MjuvV
+
+fit_MjuvV = lm(dev_time_MjuvV_reduced ~ k_vals_reduced_MjuvV_inv )
+summary(fit_MjuvV)
+
+plot( (1:length(dev_time_MjuvV))*0.1, dev_time_MjuvV, main = "Development days Juvenile V vs fit \n min_size = 4 cm and max_size = 5 cm" )
+lines(temperature_range_red_MjuvV, predict(fit_MjuvV), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "#1c9099"))
+
+#### M ADULT I#### not needed
+
+development.df_MaduI <- data.frame(row = seq(1, 1095))
+
+#simulate development with constant temperature for each 0.1°C & store results columns wise in the df:
+for (i in temperature_range){
+  development <- c()
+  initial_l <- 5 #cm
+  for (j in time_range){
+    growth = som_growth_thesis(initial_l, j ,i , "M")
+    #initial_l = growth #+  L_init
+    development = append(development, growth)
+  }
+  development.df_MaduI[as.character(i)] <- development
+}
+
+development.df_MaduI = development.df_MaduI[ , !(names(development.df_MaduI) == "row")] #delete first column with timesteps, same as index
+
+#Count how many time steps there are, where individual's size is between min and max size of its size class range:
+dev_time_MaduI <- sapply(development.df_MaduI, function(col){
+  BrownShrimp::count_devDays(col, adultI_min, Linf_M) } )
+
+
+#With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
+plot( (1:length(dev_time_MaduI))*0.1, dev_time_MaduI, main = "Development days Adult I \n min_size = 5 cm and max_size = 6 cm" )
+plot( (1:length(dev_time_MaduI))*0.1, 1/dev_time_MaduI, main = "1/Development days Adult I \n min_size = 5 cm and max_size = 6 cm" )
+lines(temperature_range, k_vals_M, col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("gray48", "#1c9099"))
+
+#Deleet values where there is no development i.e. when devTime = 1095
+indexes_1095 <- which(dev_time_MaduI == 1095)
+dev_time_MaduI_reduced <- dev_time_MaduI[dev_time_MaduI != 1095]
+temperature_range_red_MaduI <- temperature_range[-indexes_1095]
+k_vals_reduced_MaduI = k_vals_M[-indexes_1095]
+
+devTime_MaduI_inv_reduced = 1/dev_time_MaduI_reduced
+k_vals_reduced_MaduI_inv = 1/k_vals_reduced_MaduI
+
+fit_MaduI = lm(dev_time_MaduI_reduced ~ k_vals_reduced_MaduI_inv )
+summary(fit_MaduI)
+
+plot( (1:length(dev_time_MaduI))*0.1, dev_time_MaduI, main = "Development days Adult I vs fit \n min_size = 5 cm and max_size = 6 cm" )
+lines(temperature_range_red_MaduI, predict(fit_MaduI), col = '#1c9099', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("gray48", "#1c9099"))
+
+
+#### Fits ####
+
+intercepts_M = c(coef(fit_M.JuvI)[1], coef(fit_MjuvII)[1], coef(fit_MjuvIII)[1], coef(fit_MjuvIV)[1], coef(fit_MjuvV)[1] )
+factors_M = c(coef(fit_M.JuvI)[2], coef(fit_MjuvII)[2], coef(fit_MjuvIII)[2], coef(fit_MjuvIV)[2], coef(fit_MjuvV)[2])
+
+sizeClass_means_reduced_M = sizeClass_means[1:5]
+
+fitsM_df = data.frame( row.names = sizeClass_names[1:5], intercept = intercepts_M, factor = factors_M)
+
+#check weather INTERCEPTS show any relation with the mean size of the class:
+fit_intercepts_M = lm(fitsM_df$intercept ~ sizeClass_means_reduced_M)
+summary(fit_intercepts_M)
+
+plot(1:5, fitsM_df$intercept)
+abline(h= mean(fitsM_df$intercept), lty=2 )
+lines(1:5, predict(fit_intercepts_M), col = 'orange3')
+
+
+
+#check weather FACTORS show any relation with the mean size of the class:
+plot(1:5, fits_df$factor)
+
+logx_m = log(sizeClass_means_reduced_M)
+logy_m = log(fitsM_df$factor)
+
+
+fit_factortsLog_m = lm(logy_m ~ logx_m)
+
+summary(fit_factortsLog_m)
+
+log_a_m <- coef(fit_factortsLog_m)[1]
+b_est_m <- coef(fit_factortsLog_m)[2]
+a_est_m <- exp(log_a_m)
+
+plot(sizeClass_means_reduced_M, fitsM_df$factor, log = 'xy')
+lines(sizeClass_means_reduced_M, a_est_m * sizeClass_means_reduced_M^b_est_m, col = '#1c9099')
