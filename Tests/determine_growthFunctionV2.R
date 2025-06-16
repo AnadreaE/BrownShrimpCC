@@ -791,3 +791,76 @@ a_est_m <- exp(log_a_m)
 
 plot(sizeClass_means_reduced_M, fitsM_df$factor, log = 'xy')
 lines(sizeClass_means_reduced_M, a_est_m * sizeClass_means_reduced_M^b_est_m, col = '#1c9099')
+
+
+
+
+#### Plots for Thesis #####
+#PLOT FOR METHODOLOGY
+dev.off()
+
+par(mfrow = c(2,2))
+
+plot(sizeClass_means[1:7], fits_df$intercept, main = "Intercept Female", las = 1, lwd= 2, col = 'gray41',
+     ylab = 'Intercept value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+abline(h= mean(fits_df$intercept), lty=2 , lwd = 1.5)
+lines(sizeClass_means[1:7], predict(fit_intercepts), col = 'maroon', lwd = 2)
+
+
+plot(sizeClass_means[1:7], fits_df$factor, log = 'xy', main = "Factor Female", las = 1, lwd= 2, col = 'gray41',
+     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+lines(sizeClass_means[1:7], a_est * sizeClass_means_reduced^b_est, col = 'maroon', lwd = 2)
+
+plot(sizeClass_means[1:5], fitsM_df$intercept, main = "Intercept Male", las = 1, lwd= 2, col = 'gray41',
+     xlab= 'mean L from size class', ylab = 'Intercept value', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+abline(h= mean(fitsM_df$intercept), lty=2, lwd = 1.5 )
+lines(sizeClass_means[1:5], predict(fit_intercepts_M), col = '#1c9099', lwd = 2)
+
+plot(sizeClass_means[1:5], fitsM_df$factor, log = 'xy', main = "Factor Male", las = 1, lwd= 2, col = 'gray41',
+     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+lines(sizeClass_means[1:5], a_est_m * sizeClass_means_reduced_M^b_est_m, col = '#1c9099', lwd = 2)
+
+
+
+#PLOTS FOR APPENDIX
+
+par(mfrow = c(1,2))
+plot((1:length(dev_time_juvIV))*0.1, dev_time_juvIV, main = "Development days Juvenile IV \n min_size = 3 cm and max_size = 4 cm",
+      las =1, xlab = 'T', ylab = 'development time [days]', col = 'gray41', cex.lab= 1.2 )
+
+plot( (1:length(dev_time_juvIV))*0.1, 1/dev_time_juvIV, main = "1/DevTime Juvenile IV \n min_size = 3 cm and max_size = 4 cm" ,
+      las =1, xlab = 'T', ylab = 'Growt rate [1/days]', col = 'gray41', cex.lab= 1.2)
+lines(temperature_range, k_vals, col = 'red4', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c('gray41', "red4"))
+
+
+#
+par(mfrow = c(2,3))
+
+plot( (1:length(dev_time_juvII))*0.1, dev_time_juvII, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Juvenile II vs fit \n min_size = 1 cm and max_size = 2 cm", ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_juvII, predict(fit_juvII), col = 'maroon', lwd = 2)
+
+plot( (1:length(dev_time_juvIII))*0.1, dev_time_juvIII, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Juvenile III vs fit \n min_size = 2 cm and max_size = 3 cm" , ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_juvIII, predict(fit_juvIII), col = 'maroon', lwd = 2)
+
+plot( (1:length(dev_time_juvIV))*0.1, dev_time_juvIV, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Juvenile IV vs fit \n min_size = 3 cm and max_size = 4 cm" , ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_juvIV, predict(fit_juvIV), col = 'maroon', lwd = 2)
+
+plot( (1:length(dev_time_juvV))*0.1, dev_time_juvV, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Juvenile V vs fit \n min_size = 4 cm and max_size = 5 cm" , ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_juvV, predict(fit_juvV), col = 'maroon', lwd = 2)
+
+plot( (1:length(dev_time_aduI))*0.1, dev_time_aduI, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Adult I vs fit \n min_size = 5 cm and max_size = 6 cm" , ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_aduI, predict(fit_aduI), col = 'maroon', lwd = 2)
+
+plot( (1:length(dev_time_aduII))*0.1, dev_time_aduII, col = "grey41", las = 1, cex.axis = 1.4, cex.lab = 1.3, cex.main = 1.35,
+      main = "Adult II vs fit \n min_size = 6 cm and max_size = 7 cm" , ylab = 'DevTime [days]', xlab = 'T')
+lines(temperature_range_red_aduII, predict(fit_aduII), col = 'maroon', lwd = 2)
+
+
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("grey41", "maroon"))
+

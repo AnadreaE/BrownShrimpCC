@@ -126,8 +126,3 @@ ggplot(df_long_testSex, aes(x = dateTime, y = value, fill = variable)) +
     fill = "Size class"
   )
 
-
-
-
-
-
