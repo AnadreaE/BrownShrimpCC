@@ -4,16 +4,16 @@
 \alias{som_growth_thesis}
 \title{Somatic growth developed in this Thesis as function of time}
 \usage{
-som_growth_thesis(L0, time, temp, sex)
+som_growth_thesis(L0, time, temp, sex_params)
 }
 \arguments{
 \item{L0}{initial or current size \link{cm}}
 
 \item{time}{time step}
 
-\item{sex}{'F' or 'M'}
-
 \item{Tem}{temperature \link{°C}}
+
+\item{sex}{'F' or 'M'}
 }
 \value{
 new size after gorwth dependent on temperature

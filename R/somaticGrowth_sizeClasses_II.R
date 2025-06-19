@@ -10,34 +10,87 @@
 attac_rate = 0.264 #from avg. reported by Andersen Brown functional response to density   old val:0.25
 handling_time = 22 #from avg. reported by Andersen Brown functional response to density
 #alpha_ir = 1/(attac_rate*handling_time) #same as above & for an are of 209 cm2 ~8.238 for 1m2
-alpha_ir = 8.238
-#L_inf_f = 8.5
-#L_inf_f = 5.5
-epsilon = 0.22
-m = 3
-const_c = 0.01
+
 the.method = 'rk4'
 
+
+L_as_F <- 8.5
+L_as_M = 5.5
+
+juvI_min <- .6
+juvI_max <- 1.0
+
+juvII_min  <- 1.0
+juvII_max <- 2.0
+
+juvIII_min  <- 2.0
+juvIII_max <- 3.0
+
+juvIV_min  <- 3.0
+juvIV_max <- 4.0
+
+juvV_min  <- 4.0
+juvV_max <- 5.0
+
+adultI_min <- 5.0
+adultI_max <- 6.0
+
+adultII_min <- 6.0
+adultII_max <- 7.0
+
+adultIII_min <- 7.0
+adultIII_max <- 8.5#Linf_F
+
+
+parameters_solv = list(
+  Fem_params = list(
+    L_inf = 8.5,
+    #K-func:
+    r_max = 0.007638409,
+    alpha = 0.539550,
+    beta = 0.27774,
+    #Biomass shifts
+    a_est_factor = 0.07254394,
+    b_est_factor = 0.9319859,
+    intercept = -0.4968367 #-0.522060 + L_mean*0.006774
+  ),
+  M_params = list(
+    L_inf = 5.5,
+    #K-func:
+    r_max = 0.01585687,
+    alpha = 0.634518,
+    beta = 0.29947,
+    #Biomass shifts
+    intercept = -0.5066616,
+    a_est_factor = 0.1192449,
+    b_est_factor = 1.328571
+    ),
+  general_params = list(
+    #func response
+    alpha_ir = 8.238, #1/(attac_rate*handling_time)for an are of 209 cm2 ~8.238 for 1m2 ???
+    m = 3,
+    const_c = 0.01
+  ),
+ sizeMeans = list(
+   # Means Size classes
+   LL = 0.3,
+   LJ = (juvI_min+juvI_max)/2, #cm
+   LJ2 = (juvII_min+juvII_max)/2,   # 3cm
+   LJ3 = (juvIII_min+juvIII_max)/2,
+   LJ4 = (juvIV_min+juvIV_max)/2,
+   LJ5 = (juvV_min+juvV_max)/2,
+   LA1 = (adultI_min + adultI_max)/2,
+   LA2 = (adultII_min + adultII_max)/2, #cm
+   LA3 = (adultIII_min + adultIII_max)/2  #cm
+  )
+)
+
+
+
+
+
 ##### FUNCTIONS #####
-sex_parameters_func = function(sex){
-  if (sex == 'F'){
-    #general:
-    L_inf = 8.5
-    #K-func:
-    r_max = 0.007638409
-    alpha = 0.539550
-    beta = 0.277740
-  } else if (sex == 'M'){
-    #general:
-    L_inf = 5.5
-    #K-func:
-    r_max = 0.01585687
-    alpha = 0.634518
-    beta = 0.299470
-  }
-  df = data.frame(L_inf = L_inf, r_max = r_max, alpha = alpha, beta = beta  )
-  return(df)
-}
+
 
 #' K func based of flexTPC NB: for the time being all params only for fems
 #'
@@ -47,7 +100,29 @@ sex_parameters_func = function(sex){
 #' @export
 #'
 #' @examples
-K_func_briere = function(temperature, sex){
+
+K_func_briere = function(temperature, sex_params){
+  T_min = 0.5
+  T_max = 30
+
+  r_max = sex_params$r_max
+  alpha = sex_params$alpha
+  beta = sex_params$beta
+
+
+  if(temperature < T_min) { temperature = T_min } #if this true, then T_min is negative and invalid to set to the power of alpha
+
+  diff_min = temperature - T_min
+  diff_max = T_max - temperature
+  diff = T_max - T_min
+  alpha_invert = 1 - alpha
+  toReturn = r_max*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) )
+
+  return(max(0, toReturn) ) #3.205227e-06 is the equivalent to K_func_briere(T_min)
+}
+
+
+K_func_briere_old = function(temperature, sex){
   T_min = 0.5
   T_max = 30
   if (sex == 'F'){
@@ -71,8 +146,6 @@ K_func_briere = function(temperature, sex){
   return(max(0, toReturn) ) #3.205227e-06 is the equivalent to K_func_briere(T_min)
 }
 
-
-
 #'Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 #'
 #' @param temperature Temperature [°C]
@@ -84,7 +157,23 @@ K_func_briere = function(temperature, sex){
 #'
 #' @examples ingestion_rate(temperature = 15, L = 55, P=2, sex = 'F')
 
-ingestion_rate_b = function(temperature, L, P, sex){
+ingestion_rate_b = function(temperature, L, P, general_params, sex_params){
+  c_cons = general_params$const_c
+  c_div = c_cons / convertL_to_W(L)
+  alpha = general_params$alpha_ir
+  m = general_params$m
+  L_infty = sex_params$L_inf
+  #result = m*K_func_briere(temperature, sex)*convertL_to_W(L)*L_infty*(c_div)^(1/m)*( P/(P+alpha_ir) )
+  w = convertL_to_W(L)
+  result = m*K_func_briere(temperature, sex_params)*(L_infty/L)*( P/(P+alpha) )
+  #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
+  #print(paste("ingestion_rate_b sucsessful", result ) )
+  return (result)
+}
+
+
+
+ingestion_rate_b_old = function(temperature, L, P, sex){
   c_div = const_c / convertL_to_W(L)
   #params = sex_parameters_func(sex)
   #L_infty = params$L_inf
@@ -107,15 +196,16 @@ ingestion_rate_b = function(temperature, L, P, sex){
 #' @export
 #'
 #' @examples
-spawning_rate_b = function(L, temperature){
+spawning_rate_b = function(L, temperature, sex_params){
   s = 0
   intercept = 3.49198
   factor = 0.95393
-  sex = 'F'
+  #sex = 'F'
   #if(L>5) s = convertL_to_W(L)*K_func(temperature)*3*epsilon #molting_fraction(L*10, T) * convertL_to_W(L)*K_func(T)*3*epsilon #here L for Temming in mm
   if(L>5) {
-    s = intercept + convertL_to_W(L)*K_func_briere(temperature, sex)*3*factor
+    s = intercept + convertL_to_W(L)*K_func_briere(temperature, sex_params)*3*factor
   }
+  #print(paste("spawning_rate_b sucsessful", s) )
   return(s)
 }
 
@@ -139,12 +229,13 @@ spawning_rate_old = function(L, temperature){
 #' @export
 #'
 #' @examples
-respiration_rate_b = function(temperature, L, sex){
-
-  mu = m*convertL_to_W(L)*K_func_briere(temperature, sex)*0.1# this is the rigth term of vB eq.
+respiration_rate_b = function(temperature, L, sex_params){
+  m = parameters_solv$general_params$m
+  mu = m*convertL_to_W(L)*K_func_briere(temperature, sex_params)*0.1# this is the rigth term of vB eq.
   #if (L>5) {
   #  mu =  convertL_to_W(L) *K_func_briere(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
   #}
+  #print(paste("respiration_rate_b sucsessful", mu))
   return(mu)
 }
 
@@ -165,36 +256,30 @@ respiration_rate_b_OLD = function(temperature, L){
 
 
 #growth growth_optionA
-#HERE PARAMS VALUES FOR MASCULINE ARE MISSING
-shift_next_sizeClass = function(L_mean, temperature, sex){
-
-  #factor = 0.022447 * exp(0.306237 * L_mean) #0.06734 * exp(0.30622*L_mean)
-  if (sex == 'F'){
-    a_est_factor = 0.07254394
-    b_est_factor = 0.9319859
-    intercept = -0.4968367 #-0.522060 + L_mean*0.006774
-    k = K_func_briere(temperature, 'F')
-  } else if (sex == 'M'){
-    intercept = -0.5066616
-    a_est_factor = 0.1192449
-    b_est_factor = 1.328571
-    #calculations for a and b pending
-    k = K_func_briere(temperature, 'M')
-  }
-  factor = a_est_factor * L_mean^b_est_factor
-  return(1/ (intercept + factor*(1/k)) )
+#Valid only for Juvenile and adult
+shift_next_sizeClass = function(L_mean, temperature, sex_params){
+  k = K_func_briere(temperature, sex_params)
+  a = sex_params$a_est_factor
+  b = sex_params$b_est_factor
+  inter = sex_params$intercept
+  factor = a * L_mean^b
+  toReturn = k/ (k*inter + factor) #original: 1/ (inter + factor*(1/k))
+  #print(paste("shift_next_sizeClass sucsessful", toReturn ))
+  return(toReturn)
 }
 
 #Shift to next size class for Eggs
 hatch_eggs = function(Te){
   Te = max(0.00001, Te)
+  #print("hatch_eggs sucsessful")
   return(1/ (1031.34*Te^-1.345)) #return the ratio
 }
 
 #Shift to next size class for Larvae
 shiftTo_juvenile = function(Te){
   Te = max(0.00001, Te)
-  return(1 / ((5.5/0.00584)*Te^-1.347)) #return the ratio
+ # print("shiftTo_juvenile sucsessful")
+  return(1 / (941.78*Te^-1.347)) #return the ratio. # (5.5/0.00584)=941,78
 }
 
 
@@ -418,7 +503,7 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
       list(c( dP.dt, dE.dt, dL.dt,
               dJ_f.dt, dJ2_f.dt, dJ3_f.dt, dJ4_f.dt, dJ5_f.dt,
               dJ_m.dt, dJ2_m.dt, dJ3_m.dt, dJ4_m.dt, dJ5_m.dt,
-              dA1_f.dt,  dA1_m.dt,
+              dA1_f.dt, dA1_m.dt,
               dA2.dt, dA3.dt))
     })
   }
@@ -429,6 +514,200 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
 
   return(sol)
 }
+
+
+
+solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
+  system.equations = function(t, state, parameters) {
+    #following line avoid negative values in state variables
+
+    #vars <- as.list(state)
+    #with(vars, {
+    state[state < 0] <- 0
+    list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
+
+
+    #general_params = parameters$general
+    #F_params = parameters$Fem_params
+    #M_params = parameters$M_params
+    #sizeM = parameters$sizeMeans
+
+   # cat("📍 Initial debug:\n")
+    #print("State variables:")
+    #print(names(state))
+    #print(state)
+    #print(str(parameters))
+
+    #print(paste("access to size", parameters$sizeMeans$LJ4, "\n"))
+    #print(paste("access to params general",  parameters$general_params, "\n"))
+    #print(paste("access to Fem parms", parameters$Fem_params, "\n"))
+
+
+    Te = temperature_funcSolver(temperature_dataSet, t)
+
+    #LARVAE
+    gE = hatch_eggs(Te)
+    IL = ingestion_rate_b(Te, parameters$sizeMeans$LL, P, parameters$general_params, parameters$Fem_params)
+    mL = respiration_rate_b(Te, parameters$sizeMeans$LL, parameters$Fem_params)
+    gL = shiftTo_juvenile(Te)
+    dL.dt = gE*E + IL*L - mL*L - gL*L
+   # print(paste0("dL.dt: ", dL.dt))
+
+    #Juv I F
+    IJ_f = ingestion_rate_b(Te, parameters$sizeMeans$LJ, P, parameters$general_params, parameters$Fem_params)
+    mJ_f = respiration_rate_b(Te, parameters$sizeMeans$LJ, parameters$Fem_params)
+    gJI_f = shift_next_sizeClass(parameters$sizeMeans$LJ, Te, parameters$Fem_params)
+    dJ_f.dt = gL*L*0.5 + IJ_f*J_f - mJ_f*J_f - gJI_f*J_f
+   # print(paste0("dJ_f.dt: ", dJ_f.dt))
+
+    #Juv I M
+    IJ_m = ingestion_rate_b(Te, parameters$sizeMeans$LJ, P, parameters$general_params, parameters$M_params)
+    mJ_m = respiration_rate_b(Te, parameters$sizeMeans$LJ, parameters$M_params)
+    gJI_m = shift_next_sizeClass(parameters$sizeMeans$LJ, Te, parameters$M_params)
+    dJ_m.dt = gL*L*0.5 + IJ_m*J_m - mJ_m*J_m - gJI_m*J_m
+    #cat("dJ_m.dt:", dJ_m.dt, "\n")
+
+    #Juv II F
+    IJ2_f = ingestion_rate_b(Te, parameters$sizeMeans$LJ2, P, parameters$general_params, parameters$Fem_params)
+    mJ2_f = respiration_rate_b(Te, parameters$sizeMeans$LJ2, parameters$Fem_params)
+    gJ2_f = shift_next_sizeClass(parameters$sizeMeans$LJ2, Te, parameters$Fem_params)
+    dJ2_f.dt = gJI_f*J_f + IJ2_f*J2_f - mJ2_f*J2_f - gJ2_f*J2_f
+   # print(paste0("dJ2_f.dt: ", dJ2_f.dt))
+
+
+    #Juv II M
+    IJ2_m = ingestion_rate_b(Te, parameters$sizeMeans$LJ2, P, parameters$general_params, parameters$M_params)
+    mJ2_m = respiration_rate_b(Te, parameters$sizeMeans$LJ2, parameters$M_params)
+    gJ2_m = shift_next_sizeClass(parameters$sizeMeans$LJ2, Te, parameters$M_params)
+    dJ2_m.dt = gJI_m*J_m + IJ2_m*J2_m - mJ2_m*J2_m - gJ2_m*J2_m
+  #  cat("dJ2_m.dt:", dJ2_m.dt, "\n")
+
+    #Juv III F
+    IJ3_f = ingestion_rate_b(Te, parameters$sizeMeans$LJ3, P, parameters$general_params, parameters$Fem_params)
+    mJ3_f = respiration_rate_b(Te, parameters$sizeMeans$LJ3, parameters$Fem_params)
+    gJ3_f = shift_next_sizeClass(parameters$sizeMeans$LJ3, Te, parameters$Fem_params)
+    dJ3_f.dt = gJ2_f*J2_f + IJ3_f*J3_f - mJ3_f*J3_f - gJ3_f*J3_f
+  #  cat("dJ3_f.dt:", dJ3_f.dt, "\n")
+
+    #Juv III M
+    IJ3_m = ingestion_rate_b(Te, parameters$sizeMeans$LJ3, P, parameters$general_params, parameters$M_params)
+    mJ3_m = respiration_rate_b(Te, parameters$sizeMeans$LJ3, parameters$M_params)
+    gJ3_m = shift_next_sizeClass(parameters$sizeMeans$LJ3, Te, parameters$M_params)
+    dJ3_m.dt = gJ2_m*J2_m + IJ3_m*J3_m - mJ3_m*J3_m - gJ3_m*J3_m
+    #cat("dJ3_m.dt:", dJ3_m.dt, "\n")
+
+
+    #Juv IV F
+    IJ4_f = ingestion_rate_b(Te, parameters$sizeMeans$LJ4, P, parameters$general_params, parameters$Fem_params)
+    mJ4_f = respiration_rate_b(Te, parameters$sizeMeans$LJ4, parameters$Fem_params)
+    gJ4_f = shift_next_sizeClass(parameters$sizeMeans$LJ4, Te, parameters$Fem_params)
+    dJ4_f.dt = gJ3_f*J3_f + IJ4_f*J4_f - mJ4_f*J4_f - gJ4_f*J4_f
+    #cat("dJ4_f.dt:", dJ4_f.dt, "\n")
+
+    #Juv IV M
+    IJ4_m = ingestion_rate_b(Te, parameters$sizeMeans$LJ4, P, parameters$general_params, parameters$M_params)
+    mJ4_m = respiration_rate_b(Te, parameters$sizeMeans$LJ4, parameters$M_params)
+    gJ4_m = shift_next_sizeClass(parameters$sizeMeans$LJ4, Te, parameters$M_params)
+    dJ4_m.dt = gJ3_m*J3_m + IJ4_m*J4_m - mJ4_m*J4_m - gJ4_m*J4_m
+  #  cat("dJ4_m.dt:", dJ4_m.dt, "\n")
+
+
+    #Juv V F
+    IJ5_f = ingestion_rate_b(Te, parameters$sizeMeans$LJ5, P, parameters$general_params, parameters$Fem_params)
+    mJ5_f = respiration_rate_b(Te, parameters$sizeMeans$LJ5, parameters$Fem_params)
+    gJ5_f = shift_next_sizeClass(parameters$sizeMeans$LJ5, Te, parameters$Fem_params)
+    dJ5_f.dt = gJ4_f*J4_f + IJ5_f*J5_f - mJ5_f*J5_f - gJ5_f*J5_f
+   # cat("dJ5_f.dt:", dJ5_f.dt, "\n")
+
+    #Juv V M
+    IJ5_m = ingestion_rate_b(Te, parameters$sizeMeans$LJ5, P, parameters$general_params, parameters$M_params)
+    mJ5_m = respiration_rate_b(Te, parameters$sizeMeans$LJ5, parameters$M_params)
+    gJ5_m = shift_next_sizeClass(parameters$sizeMeans$LJ5, Te, parameters$M_params)
+    dJ5_m.dt = gJ4_m*J4_m + IJ5_m*J5_m - mJ5_m*J5_m - gJ5_m*J5_m
+    #cat("dJ5_m.dt:", dJ5_m.dt, "\n")
+
+
+    #Adult I F
+    IA1_f = ingestion_rate_b(Te, parameters$sizeMeans$LA1, P, parameters$general_params, parameters$Fem_params)
+    sA1_f = spawning_rate_b(parameters$sizeMeans$LA1, Te, parameters$Fem_params)
+    mA1_f = respiration_rate_b(Te, parameters$sizeMeans$LA1, parameters$Fem_params)
+    gA1_f = shift_next_sizeClass(parameters$sizeMeans$LA1, Te, parameters$Fem_params)
+    molA1_f = molting_fraction(parameters$sizeMeans$LA1, Te)
+    dA1_f.dt = gJ5_f*J5_f + IA1_f*A1_f - mA1_f*A1_f - sA1_f*A1_f*molA1_f - gA1_f*A1_f
+    #cat("dA1_f.dt:", dA1_f.dt, "\n")
+
+    #Adult I M
+    IA1_m = ingestion_rate_b(Te, parameters$sizeMeans$LA1, P, parameters$general_params, parameters$M_params)
+    mA1_m = respiration_rate_b(Te, parameters$sizeMeans$LA1,  parameters$M_params)
+    gA1_m = shift_next_sizeClass(parameters$sizeMeans$LA1, Te, parameters$M_params)
+    dA1_m.dt = gJ5_m*J5_m + IA1_m*A1_m - mA1_m*A1_m - gA1_m*A1_m #they actiually don't growth no a next size class, but let's say this is mortality, they growth old
+   # cat("dA1_m.dt:", dA1_m.dt, "\n")
+
+    #Adult II F (only F reach this size class)
+    IA2 = ingestion_rate_b(Te, parameters$sizeMeans$LA2, P, parameters$general_params, parameters$Fem_params)
+    sA2 = spawning_rate_b(parameters$sizeMeans$LA2, Te, parameters$Fem_params)
+    mA2 = respiration_rate_b(Te, parameters$sizeMeans$LA2, parameters$Fem_params)
+    gA2 = shift_next_sizeClass(parameters$sizeMeans$LA2, Te, parameters$Fem_params)
+    molA2 = molting_fraction(parameters$sizeMeans$LA2, Te)
+    dA2.dt = gA1_f*A1_f + IA2*A2 - mA2*A2 - sA2*A2*molA2 - gA2*A2
+   # cat("dA2.dt:", dA2.dt, "\n")
+
+
+    #Adult III (only F reach this size class)
+    IA3 = ingestion_rate_b(Te, parameters$sizeMeans$LA3, P, parameters$general_params, parameters$Fem_params)
+    sA3= spawning_rate_b(parameters$sizeMeans$LA3, Te, parameters$Fem_params)
+    mA3 = respiration_rate_b(Te, parameters$sizeMeans$LA3, parameters$Fem_params)
+    molA3 = molting_fraction(parameters$sizeMeans$LA3, Te)
+    dA3.dt = gA2*A2 + IA3*A3 - mA3*A3 - sA3*A3*molA3
+   # cat("dA3.dt:", dA3.dt, "\n")
+    #Eggs
+    dE.dt =  sA1_f*A1_f*molA1_f + sA2*A2*molA2 + sA3*A3*molA3 - gE*E # mA1*E: for adults, m equals cero because this is transfered to the spawning.therefore ake only sense to add mu of adults related to fishery (?)
+   # print(paste0("dE.dt: ", dE.dt))
+
+   # cat("Checking types before new_food - IL*L\n")
+   # print(paste("new_food(t):", new_food(t)))
+   # print(paste("IL:", IL))
+   # print(paste("L:", L))
+   # print(paste("IL * L:", IL * L))
+
+
+    #Plancton
+    dP.dt = ( new_food(t) - IL*L - IJ_f*J_f - IJ_m*J_m  - IJ2_f*J2_f - IJ2_m*J2_m - IJ3_f*J3_f - IJ3_m*J3_m -
+            IJ4_f*J4_f - IJ4_m*J4_m - IJ5_f*J5_f - IJ5_m*J5_m -
+            IA1_f*A1_f - IA1_m*A1_m -
+            IA2*A2 - IA3*A3 )
+
+   # print(paste0("dP.dt: ", dP.dt))
+
+    list(c(dP.dt, dE.dt, dL.dt,
+           dJ_f.dt, dJ2_f.dt, dJ3_f.dt, dJ4_f.dt, dJ5_f.dt,
+           dJ_m.dt, dJ2_m.dt, dJ3_m.dt, dJ4_m.dt, dJ5_m.dt,
+           dA1_f.dt, dA1_m.dt,
+           dA2.dt, dA3.dt) )
+
+    #if (length(out) != 17) {
+    #  cat("⚠️ Derivative vector length:", length(out), "\n")
+      #print(out)
+      #stop("Mismatch in derivative vector length")
+    #}
+
+    #cat("str: ", str(out))
+    #print(length(out))
+
+    #return(list(out))
+   #})
+
+  }
+
+
+  sol = ode(y = state, times = t, func = system.equations, parms = parameters, method=the.method)
+  sol = as.data.frame(sol)
+
+  return(sol)
+}
+
+
+
 
 
 
@@ -453,13 +732,13 @@ solver_sizeClass_sex = function(t, state, parameters, temperature_dataSet){
 #'     development = append(development, growth) }
 #'development.df_juvI[as.character(i)] <- development }
 #'
-som_growth_thesis = function (L0, time, temp, sex){ #L[cm]
+som_growth_thesis = function (L0, time, temp, sex_params){ #L[cm]
   #This funciton works only in this context i.e. to simulate growth with constant temperatures in order to
   #compare and check plausibilty of the results AND always with L0 = 0 .
   if (sex == 'F') Linf = 8.5
   if (sex == 'M') Linf = 5.5
   if (L0 > Linf ) growth = 0
-  else growth = Linf- (Linf-L0)*exp(-K_func_briere(temp, sex)*time)
+  else growth = Linf- (Linf-L0)*exp(-K_func_briere(temp, sex_params)*time)
   #else growth = Linf*( 1 - exp(-K_func_briere(temp, sex)*time) )
   return(max(0,growth) )
 }

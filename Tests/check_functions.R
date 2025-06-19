@@ -88,7 +88,71 @@ K_func_briere_t = function(temperature){
 }
 
 #### CHECK FUNCTIONAL RESPONSE ####
-#**PENDING !!!
+
+func_response = function(P){
+  alpha_ir = 0.1721763#8.238
+  return(P/(P+alpha_ir))
+}
+
+ingestion_rate_b_test = function(temperature, L, P, sex){
+  c_div = const_c / convertL_to_W(L)
+  fr = func_response(P)
+  #params = sex_parameters_func(sex)
+  #L_infty = params$L_inf
+  if (sex == 'F') L_infty = 8.5
+  if (sex == 'M') L_infty = 5.5
+  #result = m*K_func_briere(temperature, sex)*convertL_to_W(L)*L_infty*(c_div)^(1/m)*( P/(P+alpha_ir) )
+  w = convertL_to_W(L)
+  result = m*K_func_briere(temperature, sex)*(L_infty/L)*fr
+  #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
+  return (result)
+}
+
+
+#CHECK NEW FOOD
+dev.off()
+const_food = c(1, 3, 5, 10, 20, 50)
+time_range = seq(1, 365)
+
+#plot(time_range, new_food(time_range)) #reaches max. ~0.42
+
+food_3years = new_food(time_range)
+const_food = rep(const_food, times = 365*3 )
+B_population = 50 #biomass
+Temp = 10
+consumption = B_population*ingestion_rate_b_test(Temp, 4, const_food, 'F')
+
+plot(time_range, consumption, main = paste("T =", Temp, "B =", B_population, "constant food = ", const_food) )
+
+par(mfrow = c(2,3))
+
+for (i in const_food){
+  const_food_loop = rep(i, times = 365 )
+  consumption = B_population*ingestion_rate_b_test(Temp, 4, const_food_loop, 'F')
+  plot(time_range, consumption, main = paste("T =", Temp, "B =", B_population, "constant food = ", i), ylim = c(0,1.6) )
+
+}
+
+food_increasing = seq(1,500)
+
+plot(food_increasing, B_population*ingestion_rate_b_test(Temp, 4, food_increasing, 'F'))
+
+
+#### TEST SELECTIVE FISHERY ####
+
+fishery = function(l){
+  L50 = 4.49 #[cm]
+  SR = 1.56
+  nominator = exp( (1.349/SR) * (l - L50))
+  denominator = 1 + nominator
+  return(nominator / denominator)
+}
+
+l_range = seq(0.6, 8.5, 0.1)
+
+
+plot(l_range, fishery(l_range))
+
 
 
 

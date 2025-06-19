@@ -4,7 +4,7 @@
 \alias{spawning_rate_b}
 \title{Rate of Biomass from Females that flows into egg biomass}
 \usage{
-spawning_rate_b(L, temperature)
+spawning_rate_b(L, temperature, sex_params)
 }
 \arguments{
 \item{L}{size \link{cm}}

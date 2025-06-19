@@ -7,14 +7,20 @@
 
 ##### constant parameter values: #####
 
-attac_rate = 0.25
-handling_time = 22
-alpha_ir = 1/(attac_rate*handling_time)
-L_inf = 8.5
-epsilon = 0.22
-m = 3
-const_c = 0.01
-the.method = 'rk4'
+#attac_rate = 0.25
+#handling_time = 22
+#alpha_ir = 1/(attac_rate*handling_time)
+#L_inf = 8.5
+#epsilon = 0.22
+
+#the.method = 'rk4'
+
+#alpha_ir = 1/(attac_rate*handling_time)
+#m = 3
+#const_c = 0.01
+
+
+
 
 ##### FUNCTIONS #####
 
@@ -28,8 +34,11 @@ the.method = 'rk4'
 #' @examples convertL_to_W(L = 2.5)
 
 convertL_to_W = function(L){
+  const_c = parameters_solv$general_params$const_c
+  m = parameters_solv$general_params$m
   #const_c <- 0.01 # reference density g/cm^m
   #m <- 3 # ww-lenght scaling exponent
+
   return (const_c*L^m)
 }
 
@@ -60,9 +69,8 @@ K_func = function(temperature){
 #'
 #' @examples ingestion_rate(temperature = 15, L = 55, P)
 
-ingestion_rate = function(temperature, L, P){
+ingestion_rate = function(temperature, L, P, sex_params){
   c_div = const_c / convertL_to_W(L)
-
   result = m*K_func(temperature)*convertL_to_W(L)*L_inf*(c_div)^(1/m)*( P/(P+alpha_ir) )
 
   #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
@@ -94,7 +102,7 @@ molting_fraction <- function(L, temperature){
       mf = (1 / (5.7066 * L^0.7364 * exp(16.2*-0.09363) ) ) #this aviod that fraction increases with higher temperatures than T_opt and even with unrealistic T like 40°
     }
   }
-
+  #print(paste("molting_fraction sucsessful", mf ))
   return ( mf )
 }
 
@@ -158,14 +166,16 @@ natural_mortality_test = function(temperature,L){
 #'
 #' @examples
 new_food = function(t) {
-  0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) )
+  toReturn = 0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) )
+ # print(paste("new_food sucsessful",  0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) ))
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
+  return(toReturn)
 }
 
 
 
 #growth growth_optionA
-shift_next_sizeClass = function(L_mean, temperature, sex){
+shift_next_sizeClass_a = function(L_mean, temperature, sex){
   intercept = -0.4968367 #mean_intercept
   #factor = 0.022447 * exp(0.306237 * L_mean) #0.06734 * exp(0.30622*L_mean)
   factor = 0.02417559  * L_mean^0.9321806 #a_est and b_est was calculated in 'determine_growthFunctionV2.R'
