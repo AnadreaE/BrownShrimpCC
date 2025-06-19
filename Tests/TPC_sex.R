@@ -105,7 +105,6 @@ ggplot(test_sex_long, aes(x = dateTime, y = value, color = variable)) +
 
 
 ##### Stacked area chart with K as TPC ####
-#preparation:
 
 df_long_testSex <- test_sex[ , -1] %>% #delete  plancton col
   pivot_longer(-dateTime, names_to = "variable", values_to = "value")

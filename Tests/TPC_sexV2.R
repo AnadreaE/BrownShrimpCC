@@ -67,11 +67,11 @@ ggplot(test_sex_long, aes(x = dateTime, y = value, color = variable)) +
 
 ##### Stacked area chart with K as TPC ####
 
-df_long_testSex <- test_sex[ , -1] %>% #delete  plancton col
+df_long_testSex <- test_sex.v2[ , -1] %>% #delete  plancton col
   pivot_longer(-dateTime, names_to = "variable", values_to = "value")
 
 #ensure that vertical order is same as life stages
-stack_order <- rev(c(colnames(test_sex)[2:17]) )
+stack_order <- rev(c(colnames(test_sex.v2)[2:17]) )
 
 # Ensure 'variable' is a factor with levels in the same order
 df_long_testSex$variable <- factor(df_long_testSex$variable, levels = stack_order)
@@ -87,5 +87,74 @@ ggplot(df_long_testSex, aes(x = dateTime, y = value, fill = variable)) +
     fill = "Size class"
   )
 
+
+###### Barplots #######
+#See F and M separately in order to see differences and see year 2013 (third year of simulation)
+
+#Subset desired year (2013) and by sex:
+#FEM
+F_2013 = test_sex.v2 %>%
+  filter( as.Date(dateTime) > as.Date("31/12/2012", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2014", format= "%d/%m/%Y" )  ) %>%
+  select(E, L, J_f, J2_f, J3_f, J4_f, J5_f, A1_f, A2, A3)
+
+months <- c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
+#legend_labels <- c("Egg", "Larv", "Juv I", "Juv II", "Adu")
+width_vector_compact <- c((2/10)*0.2, (5/10)*0.2, ((juvV_max - juvI_min)/10)*0.2, ((adultII_max - adultI_min)/10)*0.2 )
+
+
+#all / quarterly mean values
+cols <- sequential_hcl(10, palette = "viridis")
+
+width_vector_all <- c((.2/10)*0.1, (.6/10)*0.1, ((juvI_max - juvI_min)/10)*0.1,  ((juvII_max - juvII_min)/10)*0.1, ((juvIII_max - juvIII_min)/10)*0.1,
+                      ((juvIV_max - juvIV_min)/10)*0.1, ((juvV_max - juvV_min)/10)*0.1,
+                      ((adultI_max - adultI_min)/10)*0.1, ((adultII_max - adultII_min)/10)*0.1, ((adultIII_max - adultIII_min)/10)*0.1)
+
+x_labels_vec <- c( "0", "<6", "6-10", "10-20", "20-30", "30-40", "40-50", "50-60", "60-70", "70-L_inf")
+dev.off()
+par(mfrow = c(2,2))
+j <- 1
+
+for (i in seq(1, 4)) {#four quarters
+  init_day <- 912*(j-1) #365/4 = 91,25 days per quarter, /0.1 timesteps = 912
+  final_day <- 912*j
+  month_data <- F_2013[init_day:final_day, ]
+  toPlot <- colMeans(month_data)
+  barplot(toPlot, col = cols, main = paste('F -Q ', j ,' 2013'), las = 2, cex.main = 2, names.arg = x_labels_vec  ,
+          width = width_vector_all, cex.axis = 2, cex.names = 1.8 , ylim = c(0, 11), space = 0)
+  j <- j + 1
+}
+
+
+#MALE
+M_2013 = test_sex.v2 %>%
+  filter( as.Date(dateTime) > as.Date("31/12/2012", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2014", format= "%d/%m/%Y" )  ) %>%
+  select(E, L, J_m, J2_m, J3_m, J4_m, J5_m, A1_m)
+
+months <- c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
+#legend_labels <- c("Egg", "Larv", "Juv I", "Juv II", "Adu")
+
+#all / quarterly mean values
+cols <- sequential_hcl(8, palette = "viridis")
+
+width_vector_all <- c((.2/10)*0.1, (.6/10)*0.1, ((juvI_max - juvI_min)/10)*0.1,  ((juvII_max - juvII_min)/10)*0.1, ((juvIII_max - juvIII_min)/10)*0.1,
+                      ((juvIV_max - juvIV_min)/10)*0.1, ((juvV_max - juvV_min)/10)*0.1,
+                      ((adultI_max - adultI_min)/10)*0.1, ((adultII_max - adultII_min)/10)*0.1, ((adultIII_max - adultIII_min)/10)*0.1)
+
+x_labels_vec <- c( "0", "<6", "6-10", "10-20", "20-30", "30-40", "40-50", "50-L_inf")
+#dev.off()
+par(mfrow = c(2,2))
+j <- 1
+
+for (i in seq(1, 4)) {#four quarters
+  init_day <- 912*(j-1) #365/4 = 91,25 days per quarter, /0.1 timesteps = 912
+  final_day <- 912*j
+  month_data <- M_2013[init_day:final_day, ]
+  toPlot <- colMeans(month_data)
+  barplot(toPlot, col = cols, main = paste('M - Q ', j ,' 2013'), las = 1, cex.main = 2, names.arg = x_labels_vec,
+          width = width_vector_all, cex.axis = 2, cex.names = 1.8 , ylim = c(0, 12), space = 0, las = 2)
+  j <- j + 1
+}
+mtext("size range", side = 1, outer = TRUE, line = 2, cex = 1.5)
+mtext("density", side = 2, outer = TRUE, line = 2, cex = 1.5)
 
 
