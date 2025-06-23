@@ -6,21 +6,7 @@
 
 
 ##### constant parameter values: #####
-
-#attac_rate = 0.25
-#handling_time = 22
-#alpha_ir = 1/(attac_rate*handling_time)
-#L_inf = 8.5
-#epsilon = 0.22
-
-#the.method = 'rk4'
-
-#alpha_ir = 1/(attac_rate*handling_time)
-#m = 3
-#const_c = 0.01
-
-
-
+#All now in somaticGrowth_sizeClasses_II
 
 ##### FUNCTIONS #####
 
@@ -34,15 +20,12 @@
 #' @examples convertL_to_W(L = 2.5)
 
 convertL_to_W = function(L){
-  const_c = parameters_solv$general_params$const_c
-  m = parameters_solv$general_params$m
-  #const_c <- 0.01 # reference density g/cm^m
-  #m <- 3 # ww-lenght scaling exponent
-
+  const_c = parameters_solv$general_params$const_c #reference density g/cm^m
+  m = parameters_solv$general_params$m  # ww-lenght scaling exponent
   return (const_c*L^m)
 }
 
-#' Function to calculate K (growth parameter from vB eqs.)
+#' *Deprecated Function to calculate K (growth parameter from vB eqs.)
 #'
 #' @returns K value as function of temperature
 #' @export
@@ -58,7 +41,7 @@ K_func = function(temperature){
 }
 
 
-#'Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
+#'*Deprecated Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 #'
 #' @param temperature Temperature [°C]
 #' @param L size class [cm]
@@ -106,7 +89,7 @@ molting_fraction <- function(L, temperature){
   return ( mf )
 }
 
-#' Rate of Biomass from Females that flows into egg biomass
+#' *Deprecated Rate of Biomass from Females that flows into egg biomass
 #'
 #' @param L size [cm]
 #' @param T Temperature [°C]
@@ -126,7 +109,7 @@ spawning_rate = function(L, temperature){
   return(s)
 }
 
-#' Natural mortality
+#' *Deprecated Natural mortality
 #'
 #' @param L size [cm]
 #' @param temperature Temperature [°C]
@@ -142,18 +125,6 @@ respiration_rate = function(temperature,L){
   #}
   return(mu)
 }
-
-
-natural_mortality_test = function(temperature,L){
-  m=3
-  K_range = 0.007613879*m - 0.0005557642*m #max_K - min_K #max(sapply(temp_range, K_func))
-  K_inv = (0.007613879*m - K_func(temperature)*m) #/ K_range
-  mu = convertL_to_W(L) * K_inv  # this is the rigth term of vB eq.
-  if (L>5) mu = 0 #tbc
-  return(mu)
-}
-
-
 
 
 #new_food = function(t) .2*(2+cos(t))
@@ -173,15 +144,6 @@ new_food = function(t) {
 }
 
 
-
-#growth growth_optionA
-shift_next_sizeClass_a = function(L_mean, temperature, sex){
-  intercept = -0.4968367 #mean_intercept
-  #factor = 0.022447 * exp(0.306237 * L_mean) #0.06734 * exp(0.30622*L_mean)
-  factor = 0.02417559  * L_mean^0.9321806 #a_est and b_est was calculated in 'determine_growthFunctionV2.R'
-  k = K_func(temperature)
-  return(1/ (intercept + factor*(1/k)) )
-}
 
 hatch_eggs = function(Te){
   Te = max(0.00001, Te)

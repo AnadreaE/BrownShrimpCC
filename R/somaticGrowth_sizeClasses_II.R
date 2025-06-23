@@ -77,7 +77,7 @@ parameters_solv = list(
     ),
   general_params = list(
     #func response
-    alpha_ir = 8.238, #1/(attac_rate*handling_time)for an are of 209 cm2 ~8.238 for 1m2 ???
+    #alpha_ir = 8.238, #1/(attac_rate*handling_time)for an are of 209 cm2 ~8.238 for 1m2 ???
     m = 3,
     const_c = 0.01,
     #Fishery
@@ -146,6 +146,12 @@ K_func_briere_old = function(temperature, sex){
   return(max(0, toReturn) ) #3.205227e-06 is the equivalent to K_func_briere(T_min)
 }
 
+
+alpha_igr = function(w){
+  return(643.27*w^(0.23))
+}
+
+
 #'Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 #'
 #' @param temperature Temperature [°C]
@@ -159,8 +165,9 @@ K_func_briere_old = function(temperature, sex){
 
 ingestion_rate_b = function(temperature, L, P, general_params, sex_params){
   c_cons = general_params$const_c
-  c_div = c_cons / convertL_to_W(L)
-  alpha = general_params$alpha_ir
+  w = convertL_to_W(L)
+  c_div = c_cons / w
+  alpha = alpha_igr(w)#general_params$alpha_ir
   m = general_params$m
   L_infty = sex_params$L_inf
   #result = m*K_func_briere(temperature, sex)*convertL_to_W(L)*L_infty*(c_div)^(1/m)*( P/(P+alpha_ir) )
@@ -285,13 +292,13 @@ shiftTo_juvenile = function(Te){
 
 
 #Selectivity probability
-sel_probit = function(l, L50, SR){
-  L50 = 4.49 #[cm]
-  SR = 1.56
+sel_probit = function(l, L50 = 4.49 , SR = 1.56){
   nominator = exp( (1.349/SR) * (l - L50))
   denominator = 1 + nominator
   return(nominator / denominator)
 }
+
+
 
 
 
@@ -533,8 +540,6 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
   system.equations = function(t, state, parameters) {
     #following line avoid negative values in state variables
 
-    #vars <- as.list(state)
-    #with(vars, {
     state[state < 0] <- 0
     list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
 
@@ -563,28 +568,24 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
     mL = respiration_rate_b(Te,LL, parameters$Fem_params)
     gL = shiftTo_juvenile(Te)
     dL.dt = gE*E + IL*L - mL*L - gL*L
-   # print(paste0("dL.dt: ", dL.dt))
 
     #Juv I F
     IJ_f = ingestion_rate_b(Te, LJ, P, parameters$general_params, parameters$Fem_params)
     mJ_f = respiration_rate_b(Te, LJ, parameters$Fem_params)
     gJI_f = shift_next_sizeClass(LJ, Te, parameters$Fem_params)
     dJ_f.dt = gL*L*0.5 + IJ_f*J_f - mJ_f*J_f - gJI_f*J_f
-   # print(paste0("dJ_f.dt: ", dJ_f.dt))
 
     #Juv I M
     IJ_m = ingestion_rate_b(Te, LJ, P, parameters$general_params, parameters$M_params)
     mJ_m = respiration_rate_b(Te, LJ, parameters$M_params)
     gJI_m = shift_next_sizeClass(LJ, Te, parameters$M_params)
     dJ_m.dt = gL*L*0.5 + IJ_m*J_m - mJ_m*J_m - gJI_m*J_m
-    #cat("dJ_m.dt:", dJ_m.dt, "\n")
 
     #Juv II F
     IJ2_f = ingestion_rate_b(Te, LJ2, P, parameters$general_params, parameters$Fem_params)
     mJ2_f = respiration_rate_b(Te, LJ2, parameters$Fem_params)
     gJ2_f = shift_next_sizeClass(LJ2, Te, parameters$Fem_params)
     dJ2_f.dt = gJI_f*J_f + IJ2_f*J2_f - mJ2_f*J2_f - gJ2_f*J2_f
-   # print(paste0("dJ2_f.dt: ", dJ2_f.dt))
 
 
     #Juv II M
@@ -592,55 +593,49 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
     mJ2_m = respiration_rate_b(Te, LJ2, parameters$M_params)
     gJ2_m = shift_next_sizeClass(LJ2, Te, parameters$M_params)
     dJ2_m.dt = gJI_m*J_m + IJ2_m*J2_m - mJ2_m*J2_m - gJ2_m*J2_m
-  #  cat("dJ2_m.dt:", dJ2_m.dt, "\n")
 
     #Juv III F
     IJ3_f = ingestion_rate_b(Te, LJ3, P, parameters$general_params, parameters$Fem_params)
     mJ3_f = respiration_rate_b(Te, LJ3, parameters$Fem_params)
     gJ3_f = shift_next_sizeClass(LJ3, Te, parameters$Fem_params)
-    fmJ3_f = parameters$general_params$Fi*sel_probit(LJ3, L50, SR) #fishing mortality
+    fmJ3_f = parameters$general_params$Fi*sel_probit(LJ3) #fishing mortality
     dJ3_f.dt = gJ2_f*J2_f + IJ3_f*J3_f - mJ3_f*J3_f - gJ3_f*J3_f - fmJ3_f*J3_f
-  #  cat("dJ3_f.dt:", dJ3_f.dt, "\n")
 
     #Juv III M
     IJ3_m = ingestion_rate_b(Te, LJ3, P, parameters$general_params, parameters$M_params)
     mJ3_m = respiration_rate_b(Te, LJ3, parameters$M_params)
     gJ3_m = shift_next_sizeClass(LJ3, Te, parameters$M_params)
-    fmJ3_m = parameters$general_params$Fi*sel_probit(LJ3, L50, SR) #fishing mortality
+    fmJ3_m = parameters$general_params$Fi*sel_probit(LJ3) #fishing mortality
     dJ3_m.dt = gJ2_m*J2_m + IJ3_m*J3_m - mJ3_m*J3_m - gJ3_m*J3_m - fmJ3_m*J3_m
-    #cat("dJ3_m.dt:", dJ3_m.dt, "\n")
 
 
     #Juv IV F
     IJ4_f = ingestion_rate_b(Te, LJ4, P, parameters$general_params, parameters$Fem_params)
     mJ4_f = respiration_rate_b(Te, LJ4, parameters$Fem_params)
     gJ4_f = shift_next_sizeClass(LJ4, Te, parameters$Fem_params)
-    fmJ4_f = parameters$general_params$Fi*sel_probit(LJ4, L50, SR) #fishing mortality
+    fmJ4_f = parameters$general_params$Fi*sel_probit(LJ4) #fishing mortality
     dJ4_f.dt = gJ3_f*J3_f + IJ4_f*J4_f - mJ4_f*J4_f - gJ4_f*J4_f - fmJ4_f*J4_f
-    #cat("dJ4_f.dt:", dJ4_f.dt, "\n")
 
     #Juv IV M
     IJ4_m = ingestion_rate_b(Te, LJ4, P, parameters$general_params, parameters$M_params)
     mJ4_m = respiration_rate_b(Te, LJ4, parameters$M_params)
     gJ4_m = shift_next_sizeClass(LJ4, Te, parameters$M_params)
+    #HERE FISHERY IS MISSING !!!
     dJ4_m.dt = gJ3_m*J3_m + IJ4_m*J4_m - mJ4_m*J4_m - gJ4_m*J4_m
-  #  cat("dJ4_m.dt:", dJ4_m.dt, "\n")
 
 
     #Juv V F
     IJ5_f = ingestion_rate_b(Te, LJ5, P, parameters$general_params, parameters$Fem_params)
     mJ5_f = respiration_rate_b(Te, LJ5, parameters$Fem_params)
     gJ5_f = shift_next_sizeClass(LJ5, Te, parameters$Fem_params)
-    fmJ5_f = parameters$general_params$Fi*sel_probit(LJ5, L50, SR) #fishing mortality
+    fmJ5_f = parameters$general_params$Fi*sel_probit(LJ5) #fishing mortality
     dJ5_f.dt = gJ4_f*J4_f + IJ5_f*J5_f - mJ5_f*J5_f - gJ5_f*J5_f - fmJ5_f*J5_f
-   # cat("dJ5_f.dt:", dJ5_f.dt, "\n")
 
     #Juv V M
     IJ5_m = ingestion_rate_b(Te, LJ5, P, parameters$general_params, parameters$M_params)
     mJ5_m = respiration_rate_b(Te, LJ5, parameters$M_params)
     gJ5_m = shift_next_sizeClass(LJ5, Te, parameters$M_params)
     dJ5_m.dt = gJ4_m*J4_m + IJ5_m*J5_m - mJ5_m*J5_m - gJ5_m*J5_m
-    #cat("dJ5_m.dt:", dJ5_m.dt, "\n")
 
 
     #Adult I F
@@ -649,16 +644,14 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
     mA1_f = respiration_rate_b(Te, LA1, parameters$Fem_params)
     gA1_f = shift_next_sizeClass(LA1, Te, parameters$Fem_params)
     molA1_f = molting_fraction(LA1, Te)
-    fmA1_f = parameters$general_params$Fi*sel_probit(A1_f, L50, SR) #fishing mortality
+    fmA1_f = parameters$general_params$Fi*sel_probit(A1_f) #fishing mortality
     dA1_f.dt = gJ5_f*J5_f + IA1_f*A1_f - mA1_f*A1_f - sA1_f*A1_f*molA1_f - gA1_f*A1_f - fmA1_f*A1_f
-    #cat("dA1_f.dt:", dA1_f.dt, "\n")
 
     #Adult I M
     IA1_m = ingestion_rate_b(Te, LA1, P, parameters$general_params, parameters$M_params)
     mA1_m = respiration_rate_b(Te, LA1,  parameters$M_params)
     gA1_m = shift_next_sizeClass(LA1, Te, parameters$M_params)
     dA1_m.dt = gJ5_m*J5_m + IA1_m*A1_m - mA1_m*A1_m - gA1_m*A1_m #they actiually don't growth no a next size class, but let's say this is mortality, they growth old
-   # cat("dA1_m.dt:", dA1_m.dt, "\n")
 
     #Adult II F (only F reach this size class)
     IA2 = ingestion_rate_b(Te, LA2, P, parameters$general_params, parameters$Fem_params)
@@ -666,7 +659,7 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
     mA2 = respiration_rate_b(Te, LA2, parameters$Fem_params)
     gA2 = shift_next_sizeClass(LA2, Te, parameters$Fem_params)
     molA2 = molting_fraction(LA2, Te)
-    fmA2 = parameters$general_params$Fi*sel_probit(A2, L50, SR) #fishing mortality
+    fmA2 = parameters$general_params$Fi*sel_probit(A2) #fishing mortality
     dA2.dt = gA1_f*A1_f + IA2*A2 - mA2*A2 - sA2*A2*molA2 - gA2*A2 - fmA2*A2
    # cat("dA2.dt:", dA2.dt, "\n")
 
@@ -676,7 +669,7 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
     sA3= spawning_rate_b(LA3, Te, parameters$Fem_params)
     mA3 = respiration_rate_b(Te, LA3, parameters$Fem_params)
     molA3 = molting_fraction(LA3, Te)
-    fmA3 = parameters$general_params$Fi*sel_probit(A3, L50, SR) #fishing mortality
+    fmA3 = parameters$general_params$Fi*sel_probit(A3) #fishing mortality
     dA3.dt = gA2*A2 + IA3*A3 - mA3*A3 - sA3*A3*molA3 - fmA3*A3
    # cat("dA3.dt:", dA3.dt, "\n")
     #Eggs
