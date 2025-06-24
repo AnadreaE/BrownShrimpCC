@@ -96,7 +96,7 @@ length(K_estimations_m)
 plot(temperature_range, K_estimations_m, main='K estiations male')
 
 
-#### STEP (4) Now apply regression to K-values 'curve' with gaussian distribution (F and M): ####
+#### outdated: STEP (4) Now apply regression to K-values 'curve' with gaussian distribution (F and M): ####
 #Fem
 fit_gaus_f <- nls(K_estimations_f ~  A * exp(-((temperature_range - mu)^2) / (2 * sigma^2)),
                   start = list(A = 0.0072, mu = 17, sigma = 1), trace = TRUE)
@@ -145,7 +145,7 @@ legend("topleft",
        cex = 1.25)
 
 
-#### STEP (4) Again with TPC Briere instead of Gauss (F and M): ####
+#### outdated: STEP (4) Again with TPC Briere instead of Gauss (F and M): ####
 #TPC: Termal Performance Curve
 T_min = 0.5
 T_max = 30
@@ -266,6 +266,7 @@ TSS_m_fb <- sum((K_estimations_m_df_filtered$performance - mean(K_estimations_m_
 RSQ_m_felBriere <- 1 - (RSS_m_fb / TSS_m_fb)
 cat("R-squared: ", RSQ_m_felBriere, "\n")
 
+
 plot(temperature_range, K_estimations_m, main = 'K - values M and F for each degree °C \n vs Fit felxBriere', col = 'steelblue4',
      xlab = 'Temperature (°C)', ylab = 'K', cex.lab = 1.7, cex.main = 1.6, las = 1, lwd = 2)
 points(temperature_range,K_estimations_f, col = 'orangered4', lwd = 2)
@@ -279,7 +280,7 @@ legend("topleft",
        cex = 1.25)
 
 
-############ VALIDATION OF K(T) *Andersen with Gauss vs Temming* ###############
+############ outdated: VALIDATION OF K(T) *Andersen with Gauss vs Temming* ###############
 #pending after is decided which type of
 
 temperature_15 <- temperature_func(temperature_ds, "01/01/2015", "31/12/2015")
@@ -405,7 +406,7 @@ male_plot <- ggplot() +
 print(male_plot)
 
 ############ VALIDATION OF K(T) *Andersen with flexTCP vs Temming* ###############
-func_K_briere <- function(temperature) { #refers for the time being only females
+func_K_briere_test <- function(temperature) { #refers for the time being only females
   r_max_f = 0.007638409
   T_min = 0.5
   T_max = 30
@@ -431,7 +432,7 @@ system.equations <- function(t, state, parameters) {
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
-    K <- K_func_briere(temperature_15_17$temperature[floor(t)], 'F')  # Access temperature for the current time. K_func_briere from implementation in Bib
+    K <- func_K_briere_test(temperature_15_17$temperature[floor(t)])  # Access temperature for the current time. K_func_briere from implementation in Bib
     dl.dt <- K * (L_as - l)  # Differential equation
 
     return(list(dl.dt))  # Return the rate of change
@@ -455,7 +456,7 @@ growth_thesis_f <- c()
 initial_l = 0.6
 time = 0
 for (i in temperature_15_17$temperature){
-  growth = som_growth_thesis(initial_l, time ,i , "F")
+  growth = som_growth_thesis(initial_l, time ,i , parameters_solv$Fem_params)
   growth_thesis_f = append(growth_thesis_f, growth)
   time = time +1
 }
@@ -502,12 +503,13 @@ print(female_plot_b)
 
 
 ############ VALIDATION OF K(T) *flexTCP vs K_vals*
+#NB!: here I use the already iplemented K_function latest version
 
 #Compute K_vals with thesis function Fem:
 
-K_vals_thesis_f = sapply(temperature_range, K_func_briere, sex= 'F')
+K_vals_thesis_f = sapply(temperature_range, K_func_briere, parameters_solv$Fem_params)
 
-K_vals_thesis_m = sapply(temperature_range, K_func_briere, sex= 'M')
+K_vals_thesis_m = sapply(temperature_range, K_func_briere, parameters_solv$M_params)
 
 RSS_f <- sum((K_estimations_f - K_vals_thesis_f )^2)
 # Calculate total sum of squares (TSS)
@@ -525,7 +527,7 @@ R_squared_m
 
 
 #PLOT
-dev.off()
+#dev.off()
 layout_matrix <- matrix(c(1, 2, 3), nrow = 1, byrow = TRUE)
 # Define relative widths
 layout(layout_matrix, widths = c(3, 3, 1.5))  # 3:3:1 means third column is narrower

@@ -43,7 +43,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 0.6 #cm
   for (j in days_2years){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     development = append(development, growth)
     }
   growth_thesis_f[as.character(i)] <- development
@@ -114,14 +114,8 @@ for (j in temp_15_16$temperature){
 
 system.equations <- function(t, state, parameters) {
   with(as.list(c(state, parameters)), {
-    if (sex=='F'){
-      L_as = 8.5
-    } else if (sex=='M'){
-      L_as = 5.5
-    } else {
-      stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
-    }
-    K <- K_func_briere(temp_15_16$temperature[floor(t)], sex)  # Access temperature for the current time
+    L_as = parameters$L_inf
+    K <- K_func_briere(temp_15_16$temperature[floor(t)], parameters)  # Access temperature for the current time
     dl.dt <- K * (L_as - l)  # Differential equation
 
     return(list(dl.dt))  # Return the rate of change
@@ -137,13 +131,13 @@ state <- c(l = .6)  #cm
 
 
 ##Simulation Fem
-parameters <- list(sex='F')
+parameters <- parameters_solv$Fem_params
 cc_f <- ode(y = state, times = t, func = system.equations, parms = parameters)# Solve the ODE
 cc_f <- as.data.frame(cc_f)
 head(cc_f)
 
 ##Simulation Male
-parameters <- list(sex='M')
+parameters <- parameters_solv$M_params
 cc_m <- ode(y = state, times = t, func = system.equations, parms = parameters)# Solve the ODE
 cc_m <- as.data.frame(cc_m)
 head(cc_m)

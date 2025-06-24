@@ -16,6 +16,7 @@ molting_fraction_old <- function(L, temperature){
 temp_range_wide = seq(1,40, 0.1)
 
 plot(temp_range_wide, molting_fraction_old(6, temp_range_wide))
+abline(h = 1, lty= 2)
 
 #We identify here that curve keeps growing with temperatures that are not realistic and that are not congruent
 #with TPC theory; furthermore, the mf goes above 1, which is also completely unrealistic.
@@ -24,7 +25,7 @@ plot(temp_range_wide, molting_fraction_old(6, temp_range_wide))
 
 #### SPAWNIGN RATE ####
 
-avg_weight_egg = 17.725*10^-6 #~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
+avg_weight_egg = 17.725*10^-6 #[gr] ~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
 temp_range = seq(0,30, 0.1)
 
 fem_abundance <- 100 #number of females (we will consider first also a constant size L=6 cm)
@@ -41,7 +42,6 @@ number_eggs <- function(L){
   0.01805*L^3.539 #incongruency on Temming's paper weather 0.01805 or 0.001805. The first seem more plausible for me
 }
 
-
 #### SIMULATIONS ####
 
 eggs_production_temming <- c()
@@ -49,27 +49,25 @@ eggs_production_AF <- c()
 
 spawning_rate_old <- function(L, temperature){
   s = 0
-  if(L>5) s = convertL_to_W(L)*K_func(temperature)*3#*epsilon #molting_fraction(L*10, T) * convertL_to_W(L)*K_func(T)*3*epsilon #here L for Temming in mm
+  if(L>5) s = convertL_to_W(L)*K_func(temperature)*3
   return(s)
 }
 
 for (i in temp_range){
-  prod_temming <- fem_abundance*molting_fraction(L_test1, i)*number_eggs(L_test1*10)
+  prod_temming <- fem_abundance*molting_fraction(L_test1, i)*number_eggs(L_test1*10) #L*10 because Temming's fomula is in mm
   B_fe = convertL_to_W(6)
-  prod_AF <- B_fe*fem_abundance*molting_fraction(L_test1, i)*spawning_rate_old(L_test1, i)/epsilon
+  prod_AF <- B_fe*fem_abundance*molting_fraction(L_test1, i)*spawning_rate_old(L_test1, i)#/epsilon #Biommass
   eggs_production_temming <- append(eggs_production_temming, prod_temming) #number of eggs
   eggs_production_AF <- append(eggs_production_AF, prod_AF) #biomass
 }
 
-plot(temp_range, eggs_production_temming, main = "Temming egg production of 100Fems \n with constant T and for L=6cm",
-     xlab = 'T', ylab = 'Number Eggs')
 
 #Now plot to compare biomass
 
-Teming_biomass = eggs_production_temming*avg_weight_egg
+Teming_biomass = eggs_production_temming*avg_weight_egg #[gr]
 
-plot(temp_range, Teming_biomass, main = "Egg production with constant T \n  Nr. Fems. = 100, L=6cm",
-     xlab = 'T', ylab = 'Biomass', col = 'gray41', las = 1, lwd = 2,
+plot(temp_range, Teming_biomass, main = "Egg production Temming vs Bertalanffy \n  Nr. Fems. = 100, L=6cm",
+     xlab = 'T [°C]', ylab = 'Biomass [gr]', col = 'gray41', las = 1, lwd = 2,
      cex.main = 1.5, cex.lab = 1.75, cex.axis = 1.75)
 lines(temp_range, eggs_production_AF, col = 'orangered3', lwd = 3)
 abline(v = temp_range[which.max(Teming_biomass)], lty = 2)
@@ -88,10 +86,10 @@ legend("topleft",
 
 fit <- lm(Teming_biomass[1:163] ~ eggs_production_AF[1:163])
 summary(fit)
-intercept = 3.49198
-factor = 0.95393
+intercept = fit$coefficients[1] #3.49198
+factor = fit$coefficients[2]#0.95393
 
-plot(temp_range, eggs_production_temming*avg_weight_egg, main = "Temming vs AF fitted \n with constant T and for L=6cm",
+plot(temp_range, Teming_biomass, main = "Temming vs AF fitted \n with constant T and for L=6cm",
      xlab = 'T', ylab = 'Biomass')
 lines(temp_range, intercept + eggs_production_AF*factor, col = 'orangered3', lwd = 2)
 
@@ -104,14 +102,12 @@ temperature_dataSet <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv",
 temperature_90 <- temperature_func(temperature_dataSet, "01/01/1990", "31/12/1990")
 temperature_85 <- temperature_func(temperature_dataSet, "01/01/1985", "31/12/1985")
 
-plot(temp_range, sp_g, main = 'Spawning rate with temperature changes')
-
-spG_90 = spawning_rate(5.5, temperature_90$temperature)
+spG_90 = sapply(temperature_90$temperature, spawning_rate_b, L = 5.5, sex_params= parameters_solv$Fem_params)
 plot(temperature_90$date_time, spG_90, main = 'Spawning rate with temperature data from 1990',
      type = 'l', col = '#33638DFF')
 
 
-spG_85 = spawning_rate(5.5, temperature_85$temperature)
+spG_85 = sapply(temperature_85$temperature, spawning_rate_b, L = 5.5, sex_params= parameters_solv$Fem_params)
 plot(temperature_85$date_time, spG_85, main = 'Spawning rate with temperature data from 1985',
      type = 'l', col = '#33638DFF')
 

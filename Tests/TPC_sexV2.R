@@ -95,7 +95,9 @@ ggplot(df_long_testSex, aes(x = dateTime, y = value, fill = variable)) +
 #FEM
 F_2013 = test_sex.v2 %>%
   filter( as.Date(dateTime) > as.Date("31/12/2012", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2014", format= "%d/%m/%Y" )  ) %>%
-  select(E, L, J_f, J2_f, J3_f, J4_f, J5_f, A1_f, A2, A3)
+  mutate(J = J_f + J_m)  %>%
+  mutate(J2 = J2_f + J2_m)  %>%
+  mutate(J3 = J_f + J2_m)  %>%
 
 months <- c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
 #legend_labels <- c("Egg", "Larv", "Juv I", "Juv II", "Adu")
@@ -156,5 +158,153 @@ for (i in seq(1, 4)) {#four quarters
 }
 mtext("size range", side = 1, outer = TRUE, line = 2, cex = 1.5)
 mtext("density", side = 2, outer = TRUE, line = 2, cex = 1.5)
+
+
+#F & M together
+#gpt
+
+
+#for each quarter of the year:
+par(mfrow = c(2, 2))  # 4 plots in a 2x2 grid
+cols <- c("#add8e6", "#4682b4")  # f = light blue, m = steel blue
+x_labels_vec <- c("J", "J2", "J3", "J4", "J5", "A1")
+width_vector_all <- rep(1, length(x_labels_vec))  # optional if custom widths needed
+
+# Loop through 4 quarters
+for (q in 1:4) {
+  init_idx <- 912 * (q - 1) + 1
+  final_idx <- 912 * q
+
+  # Subset data for the quarter
+  quarter_data <- M_F_2013[init_idx:final_idx, ]
+
+  # Select only needed columns
+  juvenile_adult_df <- quarter_data %>%
+    select(matches("^(J|A1)\\d?_f$|^(J|A1)\\d?_m$"))
+
+  egg_larv = quarter_data %>%
+      select(c('E', 'L'))
+
+  # Compute mean per column
+  means_small <- colMeans(egg_larv)
+  means_big <- colMeans(juvenile_adult_df)
+  names_s = names(means_small)
+  names_b = names(means_big)
+
+  # Reshape for barplot
+  means_df <- data.frame(
+    class_sex = c(names_s, names_b),
+    #value = as.numeric(means)
+    value = as.numeric(c(means_small, means_big))
+  )
+
+  # Split into class and sex
+  means_df <- means_df %>%
+    tidyr::separate(class_sex, into = c("class", "sex"), sep = "_") %>%
+    tidyr::pivot_wider(names_from = sex, values_from = value) %>%
+    dplyr::arrange(factor(class, levels = x_labels_vec))  # order classes
+
+  # Transpose to matrix for barplot
+  mat <- t(as.matrix(means_df[, c("f", "m")]))  # rows: f/m, columns: classes
+
+  # Barplot
+  barplot(mat,
+          col = cols,
+          main = paste('F and M - Q', q, '2013'),
+          names.arg = x_labels_vec,
+          las = 2,
+          cex.main = 2,
+          cex.axis = 1.5,
+          cex.names = 1.5,
+          ylim = c(0, max(colSums(mat)) * 1.1),
+          width = width_vector_all,
+          space = 0,
+          beside = FALSE,
+          legend.text = c("Female", "Male"),
+          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1.2)
+  )
+}
+
+
+
+par(mfrow = c(2, 2))
+
+# Define colors for each sex: f = light blue, m = steel blue, U = gray
+cols <- c("f" = "#8856a7", "m" = "#add8e6", "U" = "gray80")
+
+# Define x-axis label order (class names)
+x_labels_vec <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1")
+width_vector_all <- rep(1, length(x_labels_vec))  # Optional bar widths
+
+# Loop through 4 quarters
+for (q in 1:4) {
+  # Indices for each quarter
+  init_idx <- 912 * (q - 1) + 1
+  final_idx <- 912 * q
+
+  # Subset data for quarter
+  quarter_data <- M_F_2013[init_idx:final_idx, ]
+
+  # 1. Get sexed class columns (e.g., J_f, J2_m, A1_f, etc.)
+  sexed_df <- quarter_data %>%
+    select(matches("^(J|A1)\\d?_f$|^(J|A1)\\d?_m$"))
+
+  # 2. Get unsexed class columns: E and L
+  unsexed_df <- quarter_data %>%
+    select(E, L)
+
+  # 3. Compute column means
+  sexed_means <- colMeans(sexed_df)
+  unsexed_means <- colMeans(unsexed_df)
+
+  # 4. Create long-format data frame for sexed
+  sexed_df_long <- data.frame(
+    class_sex = names(sexed_means),
+    value = as.numeric(sexed_means)
+  ) %>%
+    separate(class_sex, into = c("class", "sex"), sep = "_")
+
+  # 5. Create long-format data frame for unsexed, with sex = "U"
+  unsexed_df_long <- data.frame(
+    class = names(unsexed_means),
+    value = as.numeric(unsexed_means),
+    sex = "U"
+  )
+
+  # 6. Combine both
+  means_df <- bind_rows(sexed_df_long, unsexed_df_long)
+
+  # 7. Set class as factor to preserve desired order
+  means_df$class <- factor(means_df$class, levels = x_labels_vec)
+
+  # 8. Pivot to wide format for barplot
+  means_mat <- means_df %>%
+    pivot_wider(names_from = sex, values_from = value, values_fill = 0) %>%
+    arrange(class) %>%
+    select(any_of(c("f", "m", "U")))  # Ensure consistent column order
+
+  # 9. Transpose to matrix for barplot (rows = sex, columns = classes)
+  mat <- t(as.matrix(means_mat))
+
+  # 10. Draw barplot
+  barplot(mat,
+          col = cols[rownames(mat)],
+          main = paste('F & M - Q', q, '2013'),
+          names.arg = x_labels_vec,
+          las = 1,
+          cex.main = 2,
+          cex.axis = 1.5,
+          cex.names = 1.5,
+          ylim = c(0, max(colSums(mat)) * 1.1),
+          width = width_vector_all,
+          space = 0,
+          beside = FALSE,
+          legend.text = rownames(mat),
+          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1.2)
+  )
+}
+
+
+
 
 

@@ -48,7 +48,7 @@ temperature_range <- seq(0,30, 0.1) #(10,15)
 
 #### Simulations FEMALES ####
 
-k_vals = sapply(temperature_range, K_func_briere, sex = 'F')
+k_vals = sapply(temperature_range, K_func_briere, parameters_solv$Fem_params)
 
 #### JUVI ####
 
@@ -59,7 +59,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 0.6 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -107,7 +107,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 1 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -153,7 +153,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 2 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -200,7 +200,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 3 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -245,7 +245,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 4 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -291,7 +291,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 5 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -337,7 +337,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 6 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "F")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$Fem_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -476,7 +476,7 @@ legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "
 
 #### Simulations MALES ####
 
-k_vals_M = sapply(temperature_range, K_func_briere, sex = 'M')
+k_vals_M = sapply(temperature_range, K_func_briere, parameters_solv$M_params)
 
 #### M JUVI  ####
 
@@ -487,7 +487,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 0.6 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -535,7 +535,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 1 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -581,7 +581,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 2 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -628,7 +628,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 3 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -673,7 +673,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 4 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }
@@ -718,7 +718,7 @@ for (i in temperature_range){
   development <- c()
   initial_l <- 5 #cm
   for (j in time_range){
-    growth = som_growth_thesis(initial_l, j ,i , "M")
+    growth = som_growth_thesis(initial_l, j ,i , parameters_solv$M_params)
     #initial_l = growth #+  L_init
     development = append(development, growth)
   }

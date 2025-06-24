@@ -148,7 +148,7 @@ K_func_briere_old = function(temperature, sex){
 
 
 alpha_igr = function(w){
-  return(643.27*w^(0.23))
+  return(0.64327*w^(0.23)) #[gr C (prey) / m2] , m2 considering 10 cm water depth as
 }
 
 
@@ -205,8 +205,8 @@ ingestion_rate_b_old = function(temperature, L, P, sex){
 #' @examples
 spawning_rate_b = function(L, temperature, sex_params){
   s = 0
-  intercept = 3.49198
-  factor = 0.95393
+  intercept = 0.6407258 #3.49198
+  factor = 4.336045 #0.95393
   #sex = 'F'
   #if(L>5) s = convertL_to_W(L)*K_func(temperature)*3*epsilon #molting_fraction(L*10, T) * convertL_to_W(L)*K_func(T)*3*epsilon #here L for Temming in mm
   if(L>5) {
@@ -729,8 +729,7 @@ solver_sizeClass_sex.v2 = function(t, state, parameters, temperature_dataSet){
 som_growth_thesis = function (L0, time, temp, sex_params){ #L[cm]
   #This funciton works only in this context i.e. to simulate growth with constant temperatures in order to
   #compare and check plausibilty of the results AND always with L0 = 0 .
-  if (sex == 'F') Linf = 8.5
-  if (sex == 'M') Linf = 5.5
+  Linf = sex_params$L_inf
   if (L0 > Linf ) growth = 0
   else growth = Linf- (Linf-L0)*exp(-K_func_briere(temp, sex_params)*time)
   #else growth = Linf*( 1 - exp(-K_func_briere(temp, sex)*time) )

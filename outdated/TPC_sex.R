@@ -1,5 +1,9 @@
 #HERE SIMULATIONS WITH NEW K-FUNC tpc FLEXBRIERE
 
+#Outdated message: This version still uses old functions, where parameters differentiations between F and M are within
+#the functions and not passed as paramater through the solver.
+
+
 library(ggplot2)
 library(deSolve)
 library(RColorBrewer)
