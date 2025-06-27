@@ -1,5 +1,7 @@
+library(BrownShrimp)
+
 #DETERMINE INITAL CONDITIONS BASED ON REFERENCES FOUND IN LITERATURE
-# Spring 2015
+# Spring 2015 (source: Hünerlage: Reprod. and recruitment in inner German bright)
 
 ### 1) ovigerous fems : 40 individuals / 1000 m2
 avg_l_OF = (5.0+8.5)/2
@@ -23,11 +25,11 @@ fem_biomass = 100*OF_biomass/2.26
 #-> fem biomass = 5443.3 gr / m2
 
 
-### 2) Larve 145 individuals / 1000 m2
+### 2) Larve 145 individuals / m2
 avg_l_larv = 0.4 # cm
 avg_w_larv = convertL_to_W(0.4)
 
-larv_biomass = 145*avg_w_larv #[gr/1000m2]
+larv_biomass = 145*avg_w_larv*1000 #[gr/1000m2]
 
 
 

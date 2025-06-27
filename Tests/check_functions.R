@@ -1,3 +1,8 @@
+library(dplyr)
+library(lubridate)
+library(BrownShrimp)
+library(deSolve)
+
 #Here I will check plausibility of individual funciton that are used in the model
 
 #### Some params ####
@@ -105,6 +110,170 @@ l_range = seq(0.6, 8.5, 0.1)
 
 plot(l_range, fishery(l_range))
 
+
+#### CHECK SPAWNING ####
+# check and compare share of avigerous females against Hünerlage data###
+temperature_dataSet <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
+T_13_16 = temperature_func(temperature_dataSet, "01/01/2013", "31/12/2016")
+L_avg = (5.0+8.5)/2
+share_OF = T_13_16 %>%
+          mutate(shareOF = sapply(T_13_16$temperature, molting_fraction, L = L_avg))
+
+#Now simulate this time period:
+
+state_rev1 = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+               J_f = 2, J2_f = 2, J3_f = 2 , J4_f = 1.8, J5_f = 1.8,
+               J_m = 2 , J2_m = 2, J3_m = 2, J4_m = 1.8, J5_m = 1.8,
+               A1_f = 5.443*0.5, A1_m = 5.443*0.5,
+               A2 = 5.443*0.375, A3=5.443*0.125) #males doesn't reach this size classes
+
+t_3years = seq(0,length(T_13_16$temperature)-0.1, by = 0.1)
+
+parameters = parameters_solv
+
+
+start <- Sys.time()
+check_OF <- solver_sizeClass_sex.v2(t = t_3years, state = state_rev1, parameters = parameters, temperature_dataSet = T_13_16)
+print(Sys.time() - start)
+
+start_date <- as.POSIXct("2013-01-01", format="%Y-%m-%d", tz = "UTC")
+
+check_OF <- mutate(check_OF, dateTime = start_date + check_OF$time * 86400) #86400 seconds in one day
+check_OF <- check_OF[ , -1]
+
+#Filter only spring data share_OF:
+share_OF$date_time <- as.POSIXct(share_OF$date_time)
+
+# Extract month
+share_OF_spring = share_OF %>%
+  filter(month(date_time) %in% 3:5)
+
+#Filter only spring data simulation:
+check_OF$dateTime <- as.POSIXct(check_OF$dateTime)
+check_OF_spring = check_OF %>%
+  filter(month(dateTime) %in% 3:5) %>%
+  mutate(date = as.Date(dateTime)) %>%           # Extract date only
+  group_by(date) %>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+
+
+density_OF = check_OF_spring %>%
+  mutate (densityOF = share_OF_spring$shareOF*check_OF_spring$A1_f + share_OF_spring$shareOF*check_OF_spring$A2 + share_OF_spring$shareOF*check_OF_spring$A3)
+
+den_sum2013 = density_OF %>%
+  filter(year(date) == 2013) %>%
+  summarise(total_density = sum(densityOF, na.rm = TRUE))
+
+den_sum2014 = density_OF %>%
+  filter(year(date) == 2014) %>%
+  summarise(total_density = sum(densityOF, na.rm = TRUE))
+
+den_sum2015 = density_OF %>%
+  filter(year(date) == 2015) %>%
+  summarise(total_density = sum(densityOF, na.rm = TRUE))
+
+den_sum2016 = density_OF %>%
+  filter(year(date) == 2016) %>%
+  summarise(total_density = sum(densityOF, na.rm = TRUE))
+
+
+barplot(c(den_sum2013$total_density, den_sum2014$total_density, den_sum2015$total_density, den_sum2016$total_density), arg.names = c('2013', '2014', '2015', '2016'))
+
+
+#Check monthly values 2013
+
+share_OF2013 = share_OF %>%
+  filter(year(date_time) == 2013)
+
+check_OF2013 =  check_OF %>%
+      filter(year(dateTime) == 2013) %>%
+      mutate(date = as.Date(dateTime)) %>%           # Extract date only
+      group_by(date) %>%                             # Group by just the date
+      summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+
+density_OF2013 = share_OF2013 %>%
+  mutate(density = share_OF2013$shareOF*check_OF2013$A1_f +  share_OF2013$shareOF*check_OF2013$A2 + share_OF2013$shareOF*check_OF2013$A3)
+
+monthly2013 = density_OF2013 %>%
+ # mutate(date = as.Date(date_time)) %>%
+  group_by(month(date_time))%>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+
+months = c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+barplot(monthly2013$density, names.arg = months)
+
+#Check monthly values 2014
+
+share_OF2014 = share_OF %>%
+  filter(year(date_time) == 2014)
+
+check_OF2014 =  check_OF %>%
+  filter(year(dateTime) == 2014) %>%
+  mutate(date = as.Date(dateTime)) %>%           # Extract date only
+  group_by(date) %>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+
+density_OF2014 = share_OF2014 %>%
+  mutate(density = share_OF2014$shareOF*check_OF2014$A1_f +  share_OF2013$shareOF*check_OF2014$A2 + share_OF2014$shareOF*check_OF2014$A3)
+
+monthly2013 = density_OF2014 %>%
+  # mutate(date = as.Date(date_time)) %>%
+  group_by(month(date_time))%>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+
+months = c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+barplot(monthly2013$density, names.arg = months, main = '2014')
+
+dev.off()
+
+#Check monthly values 2015
+
+share_OF2015 = share_OF %>%
+  filter(year(date_time) == 2015)
+
+check_OF2015 =  check_OF %>%
+  filter(year(dateTime) == 2015) %>%
+  mutate(date = as.Date(dateTime)) %>%           # Extract date only
+  group_by(date) %>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+
+density_OF2015 = share_OF2015 %>%
+  mutate(density = share_OF2015$shareOF*check_OF2015$A1_f +  share_OF2013$shareOF*check_OF2015$A2 + share_OF2015$shareOF*check_OF2015$A3)
+
+monthly2013 = density_OF2015 %>%
+  # mutate(date = as.Date(date_time)) %>%
+  group_by(month(date_time))%>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+
+months = c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+barplot(monthly2013$density, names.arg = months, main = '2015')
+
+
+#Check monthly values 2016
+
+share_OF2016 = share_OF %>%
+  filter(year(date_time) == 2016)
+
+check_OF2016 =  check_OF %>%
+  filter(year(dateTime) == 2016) %>%
+  mutate(date = as.Date(dateTime)) %>%           # Extract date only
+  group_by(date) %>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm = TRUE)))
+
+density_OF2016 = share_OF2016 %>%
+  mutate(density = share_OF2016$shareOF*check_OF2016$A1_f +  share_OF2013$shareOF*check_OF2016$A2 + share_OF2016$shareOF*check_OF2016$A3)
+
+monthly2013 = density_OF2016 %>%
+  # mutate(date = as.Date(date_time)) %>%
+  group_by(month(date_time))%>%                             # Group by just the date
+  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+
+months = c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
+
+barplot(monthly2013$density, names.arg = months, main = '2016')
 
 
 

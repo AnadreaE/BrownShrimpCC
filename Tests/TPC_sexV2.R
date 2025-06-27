@@ -28,16 +28,40 @@ state2 <- c(P = 2, E = 0.1, L= 0.4 ,
            A1_f = 0.25*0.5, A1_m = 0.25*0.5,
            A2 = 0.1, A3=0.1) #males doesn't reach this size classes
 
+#following has been adapted according to references found for some life stages in literature:
+                                #has dimention [kg/ 1000m2]
+state_rev1 = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+               J_f = 2, J2_f = 2, J3_f = 2 , J4_f = 1.8, J5_f = 1.8,
+               J_m = 2 , J2_m = 2, J3_m = 2, J4_m = 1.8, J5_m = 1.8,
+               A1_f = 5.443*0.5, A1_m = 5.443*0.5,
+               A2 = 5.443*0.375, A3=5.443*0.125) #males doesn't reach this size classes
+#Ref: Larv: 0.0928 kg/1000m2 but lets say that wihtout predation this is 50% bigger
+#Ref Fem: 5.443 kg/1000m2 has to be distributed over the 3 Fem adult size classes: we know that A1 > A2 > A3 in biomass
+#therefore lets consider following ratio: A1: 0.5, A2: 0.375, A3: 0.125
+#since numbers are bigger now, increase juveniles
+
+
+
 t = seq(0,length(temperature_10_11$temperature)-0.1, by = 0.1)
 t_5years = seq(0,length(temperature_10_14$temperature)-0.1, by = 0.1)
 
 parameters = parameters_solv
+#Test with state2
+#start <- Sys.time()
+#test_sex.v2 <- solver_sizeClass_sex.v2(t = t_5years, state = state2, parameters = parameters, temperature_dataSet = temperature_10_14)
+#print(Sys.time() - start)
+
+#TEST WITH state_rev1
+
+#Test with state2
+temperature_14_18 <- temperature_func(temperature_dataSet, "01/01/2014", "31/12/2018")
 
 start <- Sys.time()
-test_sex.v2 <- solver_sizeClass_sex.v2(t = t_5years, state = state2, parameters = parameters, temperature_dataSet = temperature_10_14)
+test_sex.v2 <- solver_sizeClass_sex.v2(t = t_5years, state = state_rev1, parameters = parameters, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
-start_date <- as.POSIXct("2010-01-01", format="%Y-%m-%d", tz = "UTC")
+#start_date <- as.POSIXct("2010-01-01", format="%Y-%m-%d", tz = "UTC")
+start_date <- as.POSIXct("2014-01-01", format="%Y-%m-%d", tz = "UTC")
 
 test_sex.v2 <- mutate(test_sex.v2, dateTime = start_date + test_sex.v2$time * 86400) #86400 seconds in one day
 test_sex.v2 <- test_sex.v2[ , -1] # delete timesteps column
@@ -95,9 +119,7 @@ ggplot(df_long_testSex, aes(x = dateTime, y = value, fill = variable)) +
 #FEM
 F_2013 = test_sex.v2 %>%
   filter( as.Date(dateTime) > as.Date("31/12/2012", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2014", format= "%d/%m/%Y" )  ) %>%
-  mutate(J = J_f + J_m)  %>%
-  mutate(J2 = J2_f + J2_m)  %>%
-  mutate(J3 = J_f + J2_m)  %>%
+  select(E, L, J_f, J2_f, J3_f, J4_f, J5_f, A1_f, A2, A3)
 
 months <- c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez')
 #legend_labels <- c("Egg", "Larv", "Juv I", "Juv II", "Adu")
@@ -162,70 +184,13 @@ mtext("density", side = 2, outer = TRUE, line = 2, cex = 1.5)
 
 #F & M together
 #gpt
+M_F_2015 = test_sex.v2 %>%
+  filter( as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2016", format= "%d/%m/%Y" )  ) %>%
+  select(E, L, J_f, J2_f, J3_f, J4_f, J5_f, A1_f, J_m, J2_m, J3_m, J4_m, J5_m, A1_m, A2, A3)
 
 
-#for each quarter of the year:
-par(mfrow = c(2, 2))  # 4 plots in a 2x2 grid
-cols <- c("#add8e6", "#4682b4")  # f = light blue, m = steel blue
-x_labels_vec <- c("J", "J2", "J3", "J4", "J5", "A1")
-width_vector_all <- rep(1, length(x_labels_vec))  # optional if custom widths needed
 
 # Loop through 4 quarters
-for (q in 1:4) {
-  init_idx <- 912 * (q - 1) + 1
-  final_idx <- 912 * q
-
-  # Subset data for the quarter
-  quarter_data <- M_F_2013[init_idx:final_idx, ]
-
-  # Select only needed columns
-  juvenile_adult_df <- quarter_data %>%
-    select(matches("^(J|A1)\\d?_f$|^(J|A1)\\d?_m$"))
-
-  egg_larv = quarter_data %>%
-      select(c('E', 'L'))
-
-  # Compute mean per column
-  means_small <- colMeans(egg_larv)
-  means_big <- colMeans(juvenile_adult_df)
-  names_s = names(means_small)
-  names_b = names(means_big)
-
-  # Reshape for barplot
-  means_df <- data.frame(
-    class_sex = c(names_s, names_b),
-    #value = as.numeric(means)
-    value = as.numeric(c(means_small, means_big))
-  )
-
-  # Split into class and sex
-  means_df <- means_df %>%
-    tidyr::separate(class_sex, into = c("class", "sex"), sep = "_") %>%
-    tidyr::pivot_wider(names_from = sex, values_from = value) %>%
-    dplyr::arrange(factor(class, levels = x_labels_vec))  # order classes
-
-  # Transpose to matrix for barplot
-  mat <- t(as.matrix(means_df[, c("f", "m")]))  # rows: f/m, columns: classes
-
-  # Barplot
-  barplot(mat,
-          col = cols,
-          main = paste('F and M - Q', q, '2013'),
-          names.arg = x_labels_vec,
-          las = 2,
-          cex.main = 2,
-          cex.axis = 1.5,
-          cex.names = 1.5,
-          ylim = c(0, max(colSums(mat)) * 1.1),
-          width = width_vector_all,
-          space = 0,
-          beside = FALSE,
-          legend.text = c("Female", "Male"),
-          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1.2)
-  )
-}
-
-
 
 par(mfrow = c(2, 2))
 
@@ -233,7 +198,7 @@ par(mfrow = c(2, 2))
 cols <- c("f" = "#8856a7", "m" = "#add8e6", "U" = "gray80")
 
 # Define x-axis label order (class names)
-x_labels_vec <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1")
+x_labels_vec <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1", "A2", "A3")
 width_vector_all <- rep(1, length(x_labels_vec))  # Optional bar widths
 
 # Loop through 4 quarters
@@ -243,7 +208,7 @@ for (q in 1:4) {
   final_idx <- 912 * q
 
   # Subset data for quarter
-  quarter_data <- M_F_2013[init_idx:final_idx, ]
+  quarter_data <- M_F_2015[init_idx:final_idx, ]
 
   # 1. Get sexed class columns (e.g., J_f, J2_m, A1_f, etc.)
   sexed_df <- quarter_data %>%
@@ -251,7 +216,7 @@ for (q in 1:4) {
 
   # 2. Get unsexed class columns: E and L
   unsexed_df <- quarter_data %>%
-    select(E, L)
+    select(E, L, A2, A3)
 
   # 3. Compute column means
   sexed_means <- colMeans(sexed_df)
@@ -289,22 +254,158 @@ for (q in 1:4) {
   # 10. Draw barplot
   barplot(mat,
           col = cols[rownames(mat)],
-          main = paste('F & M - Q', q, '2013'),
+          main = paste('F & M - Q', q, '2015'),
           names.arg = x_labels_vec,
           las = 1,
           cex.main = 2,
           cex.axis = 1.5,
           cex.names = 1.5,
-          ylim = c(0, max(colSums(mat)) * 1.1),
+         # ylim = c(0, max(colSums(mat)) * 1.1),
           width = width_vector_all,
           space = 0,
           beside = FALSE,
           legend.text = rownames(mat),
-          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1.2)
+          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
   )
 }
 
 
 
+#### TEST NOW V3 WITH PREDATION #####
 
 
+#following has been adapted according to references found for some life stages in literature:
+#has dimention [kg/ 1000m2]
+state3 = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+               J_f = 2, J2_f = 2, J3_f = 2 , J4_f = 1.8, J5_f = 1.8,
+               J_m = 2 , J2_m = 2, J3_m = 2, J4_m = 1.8, J5_m = 1.8,
+               A1_f = 5.443*0.5, A1_m = 5.443*0.5,
+               A2 = 5.443*0.375, A3=5.443*0.125, #males doesn't reach this size classes
+               Pred = 0.05 )
+
+#Ref: Larv: 0.0928 kg/1000m2 but lets say that wihtout predation this is 50% bigger
+#Ref Fem: 5.443 kg/1000m2 has to be distributed over the 3 Fem adult size classes: we know that A1 > A2 > A3 in biomass
+#therefore lets consider following ratio: A1: 0.5, A2: 0.375, A3: 0.125
+#since numbers are bigger now, increase juveniles
+
+t_5years = seq(0,length(temperature_10_14$temperature)-0.1, by = 0.1)
+
+parameters = parameters_solv
+
+
+#Test with state2
+temperature_14_18 <- temperature_func(temperature_dataSet, "01/01/2014", "31/12/2018")
+
+start <- Sys.time()
+test_sex.v3 <- solver_sizeClass_sex.v3(t = t_5years, state = state3, parameters = parameters, temperature_dataSet = temperature_14_18)
+print(Sys.time() - start)
+
+start_date <- as.POSIXct("2014-01-01", format="%Y-%m-%d", tz = "UTC")
+
+test_sex.v3 <- mutate(test_sex.v3, dateTime = start_date + test_sex.v3$time * 86400) #86400 seconds in one day
+test_sex.v3 <- test_sex.v3[ , -1] # delete timesteps column
+
+test_sex_long <- test_sex.v3 %>%
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+
+#dev.off()
+ggplot(test_sex_long, aes(x = dateTime, y = value, color = variable)) +
+  geom_line(size = 1) +  # Plot lines
+  labs(title = " TPC-sex F and M \n 2014-2018", x = "Days", y = "Biomass") +
+  scale_color_manual(
+
+    values = c( "P" = "#d9f0a3", "E"= "#1c9099" ,"L" = "gray"  ,
+                "J_f" = "#8856a7", "J2_f" = "#8856a7", "J3_f" = "#8856a7", "J4_f" = "#8856a7", "J5_f" = "#8856a7",
+                "J_m" = "#9ebcda", "J2_m" = "#9ebcda", "J3_m" = "#9ebcda", "J4_m" = "#9ebcda", "J5_m" = "#9ebcda",
+                "A1_f" = "#fd8d3c" , "A1_m" = "maroon4" ,
+                "A2" = "#e6550d" , "A3" = 'maroon1', "Pred" = 'red2' )) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), # Center title
+        axis.title.x = element_text(size = 16),
+        axis.title.y = element_text(size = 16),
+        legend.position="bottom")
+
+#F & M together
+#gpt
+M_F_2015 = test_sex.v3 %>%
+  filter( as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" ) & as.Date(dateTime) < as.Date("01/01/2016", format= "%d/%m/%Y" )  ) %>%
+  select(E, L, J_f, J2_f, J3_f, J4_f, J5_f, A1_f, J_m, J2_m, J3_m, J4_m, J5_m, A1_m, A2, A3)
+
+# Loop through 4 quarters
+
+par(mfrow = c(2, 2))
+
+# Define colors for each sex: f = light blue, m = steel blue, U = gray
+cols <- c("f" = "#8856a7", "m" = "#add8e6", "U" = "gray80")
+
+# Define x-axis label order (class names)
+x_labels_vec <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1", "A2", "A3")
+width_vector_all <- rep(1, length(x_labels_vec))  # Optional bar widths
+
+# Loop through 4 quarters
+for (q in 1:4) {
+  # Indices for each quarter
+  init_idx <- 912 * (q - 1) + 1
+  final_idx <- 912 * q
+
+  # Subset data for quarter
+  quarter_data <- M_F_2015[init_idx:final_idx, ]
+
+  # 1. Get sexed class columns (e.g., J_f, J2_m, A1_f, etc.)
+  sexed_df <- quarter_data %>%
+    select(matches("^(J|A1)\\d?_f$|^(J|A1)\\d?_m$"))
+
+  # 2. Get unsexed class columns: E and L
+  unsexed_df <- quarter_data %>%
+    select(E, L, A2, A3)
+
+  # 3. Compute column means
+  sexed_means <- colMeans(sexed_df)
+  unsexed_means <- colMeans(unsexed_df)
+
+  # 4. Create long-format data frame for sexed
+  sexed_df_long <- data.frame(
+    class_sex = names(sexed_means),
+    value = as.numeric(sexed_means)
+  ) %>%
+    separate(class_sex, into = c("class", "sex"), sep = "_")
+
+  # 5. Create long-format data frame for unsexed, with sex = "U"
+  unsexed_df_long <- data.frame(
+    class = names(unsexed_means),
+    value = as.numeric(unsexed_means),
+    sex = "U"
+  )
+
+  # 6. Combine both
+  means_df <- bind_rows(sexed_df_long, unsexed_df_long)
+
+  # 7. Set class as factor to preserve desired order
+  means_df$class <- factor(means_df$class, levels = x_labels_vec)
+
+  # 8. Pivot to wide format for barplot
+  means_mat <- means_df %>%
+    pivot_wider(names_from = sex, values_from = value, values_fill = 0) %>%
+    arrange(class) %>%
+    select(any_of(c("f", "m", "U")))  # Ensure consistent column order
+
+  # 9. Transpose to matrix for barplot (rows = sex, columns = classes)
+  mat <- t(as.matrix(means_mat))
+
+  # 10. Draw barplot
+  barplot(mat,
+          col = cols[rownames(mat)],
+          main = paste('F & M - Q', q, '2015'),
+          names.arg = x_labels_vec,
+          las = 1,
+          cex.main = 2,
+          cex.axis = 1.5,
+          cex.names = 1.5,
+          # ylim = c(0, max(colSums(mat)) * 1.1),
+          width = width_vector_all,
+          space = 0,
+          beside = FALSE,
+          legend.text = rownames(mat),
+          args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
+  )
+}
