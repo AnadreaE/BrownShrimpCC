@@ -406,17 +406,23 @@ male_plot <- ggplot() +
 print(male_plot)
 
 ############ VALIDATION OF K(T) *Andersen with flexTCP vs Temming* ###############
-func_K_briere_test <- function(temperature) { #refers for the time being only females
-  r_max_f = 0.007638409
+func_K_briere_test <- function(temperature, sex) { #refers for the time being only females
   T_min = 0.5
   T_max = 30
-  alpha = 0.541524
-  beta = 0.276430
+  if (sex == 'F'){
+    r_max = 0.007638409
+    alpha = 0.541524# 0.507350
+    beta = 0.276430 #0.298723
+  } else if (sex == 'M'){
+    r_max = 0.01585687
+    alpha = 0.634518  #0.608536
+    beta = 0.29947 # 0.323362
+  }
   diff_min = temperature - T_min
   diff_max = T_max - temperature
   diff = T_max - T_min
   alpha_invert = 1 - alpha
-  return(r_max_f*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) ))
+  return(r_max*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) ))
 }
 
 # Define the system of equations (solver for dl/dt)
@@ -432,7 +438,7 @@ system.equations <- function(t, state, parameters) {
     } else {
       stop("Invalid sex value: Please ensure 'sex' is either 'F' or 'M'.")
     }
-    K <- func_K_briere_test(temperature_15_17$temperature[floor(t)])  # Access temperature for the current time. K_func_briere from implementation in Bib
+    K <- func_K_briere_test(temperature_15_17$temperature[floor(t)], sex)  # Access temperature for the current time. K_func_briere from implementation in Bib
     dl.dt <- K * (L_as - l)  # Differential equation
 
     return(list(dl.dt))  # Return the rate of change
@@ -507,9 +513,9 @@ print(female_plot_b)
 
 #Compute K_vals with thesis function Fem:
 
-K_vals_thesis_f = sapply(temperature_range, K_func_briere, parameters_solv$Fem_params)
+K_vals_thesis_f = sapply(temperature_range, func_K_briere_test, sex = 'F')#parameters_solv$Fem_params)
 
-K_vals_thesis_m = sapply(temperature_range, K_func_briere, parameters_solv$M_params)
+K_vals_thesis_m = sapply(temperature_range, func_K_briere_test, sex = 'M')#parameters_solv$M_params)
 
 RSS_f <- sum((K_estimations_f - K_vals_thesis_f )^2)
 # Calculate total sum of squares (TSS)

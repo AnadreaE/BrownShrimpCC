@@ -27,14 +27,29 @@ legend("topright", legend = c("Gauss", "Briere"), col = c("blue", "red"), lty = 
 
 #### CHECK NATURAL MORTALITY ####
 
-natural_mort_br <- sapply(temp_range, respiration_rate_b, L=3, sex_params = parameters_solv$Fem_params)
+natural_mort_br <- sapply(temp_range, respiration_rate_b, L=5, sex_params = parameters_solv$Fem_params)
 #dev.off()
-plot(temp_range, respiration_rate(temp_range, 3) , type = "b", col = "blue",
+plot(temp_range, respiration_rate(temp_range, 5) , type = "b", col = "blue",
      xlab = "Temperature (°C)", ylab = " ",
      main = "natural mortality Gauss vs Briere")
 lines(temp_range, natural_mort_br, type = "b", col = 'red' , cex = 0.5)
 legend("topright", legend = c("Gauss", "Briere"), col = c("blue", "red"), lty = 1, pch = 1)
 
+
+#Now Check how it increases with time (so test constant temperatures)
+
+Temp = c(5, 10, 15, 20, 25)
+length_range = seq(0.6, 8.5, 0.05)
+colors = c('lightpink', 'navy', 'olivedrab1', 'peru', 'violet')
+
+plot( length_range, sapply(length_range, respiration_rate_b, temperature = Temp[1], sex_params = parameters_solv$Fem_params),
+      ylim = c(0,0.015), col = colors[1])
+for (i in 2:5){
+  lines(length_range, sapply(length_range, respiration_rate_b, temperature = Temp[i], sex_params = parameters_solv$Fem_params),
+        col = colors[i], lwd = 2)
+}
+legend("topleft", legend = paste( 'T= ', as.character(Temp)),
+       col = colors, lty = 1, pch = c(1,2,2,2,2))
 
 
 #### CHECK FUNCTIONAL RESPONSE ####
@@ -274,6 +289,58 @@ monthly2013 = density_OF2016 %>%
 months = c('Jan', 'Feb', 'Mar', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec')
 
 barplot(monthly2013$density, names.arg = months, main = '2016')
+
+
+
+### test a fishery function with reltive small peaks in september
+
+fishery = function(t) {
+  toReturn = 0.2 * (1.05 + cos( (2*pi/ 365)*(t-105) ) )
+  return(toReturn)
+}
+
+days = seq(1,365*5)
+
+plot(days, fishery(days))
+
+
+month_Feffort = c(0.19, 0.2, 0.86, 1.6, 1.39, 1.26, 1.19, 1.25, 1.27, 1.26, 1.09, 0.45)
+x_ax = seq(1, length(month_Feffort))
+
+plot(x_ax, month_Feffort)
+
+
+
+#### AFTER DISCUSSION IN MEETING 03.06. ####
+#Check / try to understand why diff. of biomass between Larvae and Juv. 1 is so abrupt
+#First: Hatching and growth from Larvae to Juv I are only temperature dependent
+#whereas growth function is size AND temperature dependent. So lets check growth ratio:
+
+par(mfrow = c(2,2))
+
+for (i in Temp[1:4]){
+  plot(length_range,
+       sapply(length_range, shift_next_sizeClass, temperatur = i, sex_params = parameters_solv$Fem_params),
+       main = paste('Growth rates at T =', i ), ylim = c(0, 0.18),
+       xlab = 'L [cm]', ylab = 'rate', las = 1)
+  points(0.5, hatch_eggs(i), col = 'khaki4', bg = 'khaki3', pch = 21, cex = 2)
+  points(0.8, shiftTo_juvenile(i), col = 'slateblue4', bg = 'slateblue', pch = 21, cex = 2 )
+  legend('topright', legend= c('Eggs', 'Larvae', 'Juvenile'), col = c('khaki4', 'slateblue', 'black'),
+         pch = c(1,2,2,2,2), lty = 1, cex = 1.05, lwd = 2)
+}
+
+
+developmentTime_larvae = 1/shiftTo_juvenile(12)
+developmentTime_juv3 = 1/shift_next_sizeClass(5,12, parameters_solv$Fem_params)
+
+
+
+
+
+
+
+
+
 
 
 

@@ -152,7 +152,8 @@ hatch_eggs = function(Te){
 
 shiftTo_juvenile = function(Te){
   Te = max(0.00001, Te)
-  return(1 / ((5.5/0.00584)*Te^-1.347)) #return the ratio
+  dev_time = 941.7808*Te^-1.347
+  return(1 / dev_time) #return the ratio
 }
 
 

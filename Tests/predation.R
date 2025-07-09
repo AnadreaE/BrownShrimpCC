@@ -20,7 +20,7 @@ cod_larvRange = seq(2.5, 3, 0.01) #[cm]
 shrimp_lRange = seq(0.155, 8.5, 0.0071) #(8.5-0.15)/1176 steps to meet same length as cod L range
 
 
-
+#dev.off()
 plot(cod_lRange, exp(lopt(cod_lRange)), main = 'Optimal prey lenght of cod', xlab= 'Cod L [cm]',
      ylab = 'prey l [cm]' , col = 'gray41', las = 1, cex.axis=1.5, cex.lab=1.5)#, cex.main=1.3, xlim = c(1,4), ylim = c(0,2))
 abline(h=0.2, lty= 2, col = 'lightsalmon', lwd=2)

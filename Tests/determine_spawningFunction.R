@@ -47,7 +47,7 @@ number_eggs <- function(L){
 eggs_production_temming <- c()
 eggs_production_AF <- c()
 
-spawning_rate_old <- function(L, temperature){
+spawning_rate_vB <- function(L, temperature){
   s = 0
   if(L>5) s = convertL_to_W(L)*K_func(temperature)*3
   return(s)
@@ -56,7 +56,7 @@ spawning_rate_old <- function(L, temperature){
 for (i in temp_range){
   prod_temming <- fem_abundance*molting_fraction(L_test1, i)*number_eggs(L_test1*10) #L*10 because Temming's fomula is in mm
   B_fe = convertL_to_W(6)
-  prod_AF <- B_fe*fem_abundance*molting_fraction(L_test1, i)*spawning_rate_old(L_test1, i)#/epsilon #Biommass
+  prod_AF <- B_fe*fem_abundance*molting_fraction(L_test1, i)*spawning_rate_vB(L_test1, i)#, parameters_solv$Fem_params) #Biommass
   eggs_production_temming <- append(eggs_production_temming, prod_temming) #number of eggs
   eggs_production_AF <- append(eggs_production_AF, prod_AF) #biomass
 }
@@ -68,14 +68,14 @@ Teming_biomass = eggs_production_temming*avg_weight_egg #[gr]
 
 plot(temp_range, Teming_biomass, main = "Egg production Temming vs Bertalanffy \n  Nr. Fems. = 100, L=6cm",
      xlab = 'T [°C]', ylab = 'Biomass [gr]', col = 'gray41', las = 1, lwd = 2,
-     cex.main = 1.5, cex.lab = 1.75, cex.axis = 1.75)
-lines(temp_range, eggs_production_AF, col = 'orangered3', lwd = 3)
+     cex.main = 1.35, cex.lab = 1.5, cex.axis = 1.25)#, ylim = c(0,8))
+lines(temp_range, eggs_production_AF, col = 'maroon', lwd = 3)
 abline(v = temp_range[which.max(Teming_biomass)], lty = 2)
 legend("topleft",
-       legend = c("Temming", "v. Bertalanffy k*w", "T_opt"),
-       col = c("gray41", "orangered3", "black"),
+       legend = c("Benchark", "v. Bertalanffy k*w", "T_opt"),
+       col = c("gray41", 'maroon', "black"),
        pch = c(16, NA, NA),
-       lty = c(1,1,2))
+       lty = c(1,1,2), lwd = c(2,2,2))
 
 
 #We observe that my function's output is ways smaller than the one from Temming. Thus I will try to adapt my
