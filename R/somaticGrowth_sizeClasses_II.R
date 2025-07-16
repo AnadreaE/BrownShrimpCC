@@ -845,6 +845,9 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
     state[state < 0] = 0 # shift negative biomasses to 0
     list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
 
+    BF = state[grep("^BF", names(state))]
+    BM = state[grep("^BM", names(state))]
+
     dBF.dt = BF * 0
     dBM.dt = BM * 0
 
@@ -920,4 +923,3 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
 
   return(sol)
 }
-

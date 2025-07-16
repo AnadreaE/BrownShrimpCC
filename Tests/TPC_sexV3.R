@@ -781,12 +781,13 @@ legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'b
 
 ############
 
-
 state = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
           BF = BF+0.1, BM = BM+0.1,
           Pred = 0.05 )
 start <- Sys.time()
-test_noPreasure = solver_sizeClass.v4(t = t_5years[1:500], state = state, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
+test_r = solver_sizeClass.v4(t = t_5years, state = state, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
-plot(test_noPreasure$time,test_noPreasure$BF2)
+
+plot(test_r$time,test_r[,2],col=8,type='n',ylim=c(-1,200))
+for(i in 2:18)lines(test_r$time,test_r[,i],col=i)
