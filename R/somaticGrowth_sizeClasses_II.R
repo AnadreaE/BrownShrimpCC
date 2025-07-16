@@ -4,42 +4,36 @@
 ## Source: Andrea F.                          ##
 ################################################
 
-
 ##### constant parameter values: #####
-
-attac_rate = 0.264 #from avg. reported by Andersen Brown functional response to density   old val:0.25
-handling_time = 22 #from avg. reported by Andersen Brown functional response to density
-#alpha_ir = 1/(attac_rate*handling_time) #same as above & for an are of 209 cm2 ~8.238 for 1m2
 
 the.method = 'rk4'
 
-
-L_as_F <- 8.5
+L_as_F = 8.5
 L_as_M = 5.5
 
-juvI_min <- .6
-juvI_max <- 1.0
+juvI_min = .6
+juvI_max = 1.0
 
-juvII_min  <- 1.0
-juvII_max <- 2.0
+juvII_min = 1.0
+juvII_max = 2.0
 
-juvIII_min  <- 2.0
-juvIII_max <- 3.0
+juvIII_min = 2.0
+juvIII_max = 3.0
 
-juvIV_min  <- 3.0
-juvIV_max <- 4.0
+juvIV_min = 3.0
+juvIV_max = 4.0
 
-juvV_min  <- 4.0
-juvV_max <- 5.0
+juvV_min = 4.0
+juvV_max = 5.0
 
-adultI_min <- 5.0
-adultI_max <- 6.0
+adultI_min = 5.0
+adultI_max = 6.0
 
-adultII_min <- 6.0
-adultII_max <- 7.0
+adultII_min = 6.0
+adultII_max = 7.0
 
-adultIII_min <- 7.0
-adultIII_max <- 8.5#Linf_F
+adultIII_min = 7.0
+adultIII_max = 8.5#Linf_F
 
 #Mean of the Size class ranges
 LL = 0.3
@@ -88,7 +82,7 @@ parameters_solv = list(
   )
 )
 
-
+# Relative fishing effort factors for each month (Temming, 2011)
 monthly_Feffort = c(0.19, 0.2, 0.86, 1.6, 1.39, 1.26, 1.19, 1.25, 1.27, 1.26, 1.09, 0.45)
 
 
@@ -113,7 +107,6 @@ K_func_briere = function(temperature, sex_params){
   alpha = sex_params$alpha
   beta = sex_params$beta
 
-
   if(temperature < T_min) { temperature = T_min } #if this true, then T_min is negative and invalid to set to the power of alpha
 
   diff_min = temperature - T_min
@@ -125,9 +118,9 @@ K_func_briere = function(temperature, sex_params){
   return(max(0, toReturn) ) #3.205227e-06 is the equivalent to K_func_briere(T_min)
 }
 
-
+## @TODO: document this function
 alpha_igr = function(w){
-  return(0.064327*w^(0.23)) #[gr C (prey) / m2] , m2 considering 10 cm water depth as
+  return(0.064327*w^(0.23)) #[gr C (prey) m-2] , m2 considering 10 cm water depth as
 }
 
 
@@ -137,7 +130,7 @@ alpha_igr = function(w){
 #' @param L size class [cm]
 #' @param P Plancton (variable state)
 #'
-#' @returns growth rate in weight [gr / time ]
+#' @returns growth rate in weight [g day-1]
 #' @export
 #'
 #' @examples ingestion_rate(temperature = 15, L = 55, P=2, sex = 'F')
@@ -207,13 +200,13 @@ respiration_rate_b = function(temperature, L, sex_params){
 
 #growth growth_optionA
 #Valid only for Juvenile and adult
-shift_next_sizeClass = function(L_mean, temperature, sex_params){
+shift_next_sizeClass = function(L_mean, temperature, sex_params, size_width = 1){
   k = K_func_briere(temperature, sex_params)
   a = sex_params$a_est_factor
   b = sex_params$b_est_factor
   inter = sex_params$intercept
   factor = a * L_mean^b
-  toReturn = k/ (k*inter + factor) #original: 1/ (inter + factor*(1/k))
+  toReturn = k/ (k*inter + factor)/size_width #original: 1/ (inter + factor*(1/k))
   #print(paste("shift_next_sizeClass sucsessful", toReturn ))
   return(toReturn)
 }
@@ -646,11 +639,11 @@ solver_sizeClass_sex.v3 = function(t, state, parameters, temperature_dataSet){
   system.equations = function(t, state, parameters) {
     #following line avoid negative values in state variables
 
-    state[state < 0] <- 0
+    state[state < 0] = 0 # shift negative biomasses to 0
     list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
 
-    Te = temperature_funcSolver(temperature_dataSet, t)
-    month = month(temperature_dataSet$date_time[t+1])
+    Te = temperature_funcSolver(temperature_dataSet, t) # getting temperature for day t from temperature_dataSet
+    month = month(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
 
     dPred.dt = Bcod(t) - Pred*0.15 #0.08 mortality
 
@@ -773,7 +766,7 @@ solver_sizeClass_sex.v3 = function(t, state, parameters, temperature_dataSet){
     #Eggs
     dE.dt =  sA1_f*A1_f*molA1_f + sA2*A2*molA2 + sA3*A3*molA3 - gE*E # mA1*E: for adults, m equals cero because this is transfered to the spawning.therefore make only sense to add mu of adults related to fishery (?)
 
-    #Plancton
+    #Plankton
     dP.dt = ( new_food(t) - IL*L - IJ_f*J_f - IJ_m*J_m  - IJ2_f*J2_f - IJ2_m*J2_m - IJ3_f*J3_f - IJ3_m*J3_m -
                 IJ4_f*J4_f - IJ4_m*J4_m - IJ5_f*J5_f - IJ5_m*J5_m -
                 IA1_f*A1_f - IA1_m*A1_m -
@@ -794,9 +787,6 @@ solver_sizeClass_sex.v3 = function(t, state, parameters, temperature_dataSet){
 
   return(sol)
 }
-
-
-
 
 #' Somatic growth developed in this Thesis as function of time
 #'
@@ -829,4 +819,105 @@ som_growth_thesis = function (L0, time, temp, sex_params){ #L[cm]
   return(max(0,growth) )
 }
 
+
+
+########################################################################
+########################################################################
+
+size_width = 1
+size_limits_F = seq(1,L_as_F,by=size_width)
+size_mean_F = size_limits_F + 0.5*size_width
+BF = 0*size_mean_F
+dBF.dt = 0*size_mean_F
+N_max_F = length(size_mean_F)
+
+size_limits_M = seq(1,L_as_M,by=size_width)
+size_mean_M = size_limits_M + 0.5*size_width
+BM = 0*size_mean_M
+dBM.dt = 0*size_mean_M
+N_max_M = length(size_mean_M)
+
+#VERSION 4
+solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
+  system.equations = function(t, state, parameters) {
+    #following line avoid negative values in state variables
+
+    state[state < 0] = 0 # shift negative biomasses to 0
+    list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
+
+    dBF.dt = BF * 0
+    dBM.dt = BM * 0
+
+    Te = temperature_funcSolver(temperature_dataSet, t) # getting temperature for day t from temperature_dataSet
+    month = month(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
+
+    # predator
+    dPred.dt = Bcod(t) - Pred*0.15 #0.08 mortality
+
+    #LARVAE
+    gE = hatch_eggs(Te)
+    IL = ingestion_rate_b(Te, LL, P, parameters$general_params, parameters$Fem_params)
+    mL = respiration_rate_b(Te,LL, parameters$Fem_params)
+    gL = shiftTo_juvenile(Te)
+    pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
+    dL.dt = gE*E + IL*L - mL*L - gL*L - pL*L
+
+    promoting_L = gL*L
+    produced_eggs = 0
+    consumed_plankton = 0
+
+    promoting = 0.5*promoting_L
+    #Juvenile or adult shrimp F
+    for(i in 1:N_max_F){
+      I_i = ingestion_rate_b(Te, size_mean_F[i], P, parameters$general_params, parameters$Fem_params)
+      s_i = spawning_rate_b(size_mean_F[i], Te, parameters$Fem_params)
+      m_i = respiration_rate_b(Te, size_mean_F[i], parameters$Fem_params)
+      g_i = shift_next_sizeClass(size_mean_F[i], Te, parameters$Fem_params,size_width=size_width)
+      mol_i = molting_fraction(size_mean_F[i], Te)
+      fm_i = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(size_mean_F[i]) #fishing mortality
+      pL_i = 0 #Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_F) aging_i = parameters$general_params$a_mu
+
+      dBF.dt[i] = promoting + BF[i]*(I_i- m_i - s_i*mol_i - g_i - fm_i - pL_i - aging_i)
+      promoting = g_i*BF[i]
+      produced_eggs = produced_eggs + s_i*mol_i*BF[i]
+      consumed_plankton = consumed_plankton + I_i*BF[i]
+    }
+
+    promoting = 0.5*promoting_L
+    #Juvenile or adult shrimp M
+    for(i in 1:N_max_M){
+      I_i = ingestion_rate_b(Te, size_mean_M[i], P, parameters$general_params, parameters$M_params)
+      m_i = respiration_rate_b(Te, size_mean_M[i], parameters$M_params)
+      g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
+      fm_i = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(size_mean_M[i]) #fishing mortality
+      pL_i = 0 #Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_M) aging_i = parameters$general_params$a_mu
+
+      dBM.dt[i] = promoting + BM[i]*(I_i- m_i - g_i - fm_i - pL_i - aging_i)
+      promoting = g_i*BM[i]
+      consumed_plankton = consumed_plankton + I_i*BM[i]
+
+    }
+
+    #Eggs
+    dE.dt =  produced_eggs - gE*E
+
+    #Plankton
+    dP.dt = new_food(t) - consumed_plankton
+
+    return(list(c(dP.dt, dE.dt, dL.dt,
+           dBF.dt, dBM.dt,
+           dPred.dt) ))
+
+  }
+
+
+  sol = ode(y = state, times = t, func = system.equations, parms = parameters, method=the.method)
+  sol = as.data.frame(sol)
+
+  return(sol)
+}
 
