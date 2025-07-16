@@ -2,7 +2,7 @@
 % Please edit documentation in R/somaticGrowth_sizeClass.R
 \name{K_func}
 \alias{K_func}
-\title{Function to calculate K (growth parameter from vB eqs.)}
+\title{*Deprecated Function to calculate K (growth parameter from vB eqs.)}
 \usage{
 K_func(temperature)
 }
@@ -10,5 +10,5 @@ K_func(temperature)
 K value as function of temperature
 }
 \description{
-Function to calculate K (growth parameter from vB eqs.)
+*Deprecated Function to calculate K (growth parameter from vB eqs.)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/somaticGrowth_sizeClass.R
 \name{ingestion_rate}
 \alias{ingestion_rate}
-\title{Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)}
+\title{*Deprecated Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)}
 \usage{
 ingestion_rate(temperature, L, P, sex_params)
 }
@@ -17,7 +17,7 @@ ingestion_rate(temperature, L, P, sex_params)
 growth rate in weight \link{gr / time }
 }
 \description{
-Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
+*Deprecated Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
 }
 \examples{
 ingestion_rate(temperature = 15, L = 55, P)

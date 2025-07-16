@@ -3,7 +3,7 @@
 ## used for solving differential eq. systems  ##
 ## Source: Andrea F.                          ##
 ################################################
-
+#source("./R/somaticGrowth_sizeClasses_II.R")
 
 ##### constant parameter values: #####
 #All now in somaticGrowth_sizeClasses_II
@@ -75,7 +75,7 @@ ingestion_rate = function(temperature, L, P, sex_params){
 molting_fraction <- function(L, temperature){
   mf = 0
   L=L*10
-  if (L >= 50){
+  if (L >= parameters_solv$general_params$L_mat*10){
     if (temperature <= 0 ) {} #nothing happens, mf = 0
     else if (temperature <= 16.2 && temperature > 0){ #T_opt fems= 16.2
       #mf =  (1 / (5.7066 * L^0.7364 * temperature ^(-0.09363) ) )/2  # exp(temperature*-0.09363) ) #/2 considering

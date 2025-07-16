@@ -1,3 +1,4 @@
+library(latex2exp)
 
 #Here Predation function will be determined
 
@@ -15,19 +16,29 @@ ingestion_kernel = function(I_max, l_pred, l_prey){
 }
 
 
-cod_lRange = seq(2.5, 120, 0.1) #[cm]
+cod_lRange = seq(0.5, 120, 0.1) #[cm]
 cod_larvRange = seq(2.5, 3, 0.01) #[cm]
 shrimp_lRange = seq(0.155, 8.5, 0.0071) #(8.5-0.15)/1176 steps to meet same length as cod L range
 
 
 #dev.off()
-plot(cod_lRange, exp(lopt(cod_lRange)), main = 'Optimal prey lenght of cod', xlab= 'Cod L [cm]',
-     ylab = 'prey l [cm]' , col = 'gray41', las = 1, cex.axis=1.5, cex.lab=1.5)#, cex.main=1.3, xlim = c(1,4), ylim = c(0,2))
+plot(cod_lRange, exp(lopt(cod_lRange)), main = 'Optimal prey lenght', xlab= 'predator l [cm]',
+     ylab = 'prey l [cm]' , col = 'gray41', las = 1, cex.axis=1.5, cex.lab=1.5, cex.main = 1.4,
+     xlim = c(0,60), ylim = c(0,10), type = "n")#, cex.main=1.3, xlim = c(1,4), ylim = c(0,2))
+rect(xleft = 0, ybottom = 0, xright = 62, ytop = 1,
+     col = 'skyblue3', border = NA) #larvae and juv1 #color Offshore
+rect(xleft = 0, ybottom = 1, xright = 62, ytop = 4,
+     col = 'lightskyblue1', border = NA) # zoea 4 and 5 (juv2,3 and 4) #color intertidal
+rect(xleft = 0, ybottom = 4, xright = 62, ytop = 6,
+     col = 'papayawhip', border = NA) #juv V #color bottom, sea floor
+rect(xleft = 0, ybottom = 6, xright = 62, ytop = 8.5,
+     col = 'lightskyblue1', border = NA) #Adult #color bottom, sea floor
 abline(h=0.2, lty= 2, col = 'lightsalmon', lwd=2)
 abline(h=8.5, lty=2, col='tomato3', lwd = 2)
-legend("topleft", c('l_opt', 'min l BS', 'max l BS') ,col=c('gray41','lightsalmon', 'tomato3'),
-       lty = c(1,2,2), lwd=2)
-
+points(cod_lRange, exp(lopt(cod_lRange)), col = 'gray41', lwd = 1.5)
+legend("topleft", c(TeX("$\\textit{l}_{opt}$"), 'min l BS', 'max l BS') ,col=c('gray41','lightsalmon', 'tomato3'),
+       lty = c(1,2,2), lwd=3)
+legend("bottomright", c('open sea', 'subtidal', 'sea bottom') ,fill=c('skyblue3','lightskyblue1', 'papayawhip'))
 
 
 

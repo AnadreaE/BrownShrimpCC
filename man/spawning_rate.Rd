@@ -2,7 +2,7 @@
 % Please edit documentation in R/somaticGrowth_sizeClass.R
 \name{spawning_rate}
 \alias{spawning_rate}
-\title{Rate of Biomass from Females that flows into egg biomass}
+\title{*Deprecated Rate of Biomass from Females that flows into egg biomass}
 \usage{
 spawning_rate(L, temperature)
 }
@@ -12,5 +12,5 @@ spawning_rate(L, temperature)
 \item{T}{Temperature \link{°C}}
 }
 \description{
-Rate of Biomass from Females that flows into egg biomass
+*Deprecated Rate of Biomass from Females that flows into egg biomass
 }

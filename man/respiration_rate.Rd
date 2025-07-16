@@ -2,7 +2,7 @@
 % Please edit documentation in R/somaticGrowth_sizeClass.R
 \name{respiration_rate}
 \alias{respiration_rate}
-\title{Natural mortality}
+\title{*Deprecated Natural mortality}
 \usage{
 respiration_rate(temperature, L)
 }
@@ -15,5 +15,5 @@ respiration_rate(temperature, L)
 \link{gr / time }
 }
 \description{
-Natural mortality
+*Deprecated Natural mortality
 }

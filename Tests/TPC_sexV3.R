@@ -10,7 +10,7 @@ library(tidyr)
 library("colorspace")
 library(lubridate)
 library(latex2exp)
-
+library(profvis)
 
 #library(devtools)
 
@@ -45,11 +45,13 @@ start <- Sys.time()
 test_noPreasure <- solver_sizeClass_sex.v3(t = t_5years, state = state, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
+
 #stacked area plot
 
 start_date <- as.POSIXct("2014-01-01", format="%Y-%m-%d", tz = "UTC")
 
 test_noPreasure <- mutate(test_noPreasure, dateTime = start_date + test_noPreasure$time * 86400) #86400 seconds in one day
+
 test_noPreasure <- test_noPreasure[ , -c(1,2,19)] # delete timesteps column and predator column
 
 #cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
@@ -160,7 +162,7 @@ for (q in 1:4) {
   # 10. Draw barplot
   barplot(mat,
           col = cols[rownames(mat)],
-          main = paste('F & M - Q', q, '2015'),
+          main = paste('NP - F & M - Q', q, '2015'),
           names.arg = label_map[levels(means_df$class)], #x_labels_vec,
           las = 2,
           cex.main = 2,
@@ -302,7 +304,7 @@ for (q in 1:4) {
   # 10. Draw barplot
   barplot(mat,
           col = cols[rownames(mat)],
-          main = paste('F & M - Q', q, '2015'),
+          main = paste('P - F & M - Q', q, '2015'),
           names.arg = label_map[levels(means_df$class)], #x_labels_vec,
           las = 2,
           cex.main = 2,
@@ -313,7 +315,7 @@ for (q in 1:4) {
           space = 0,
           beside = FALSE,
           legend.text = rownames(mat),
-         ylim = c(0,10),
+         ylim = c(0,15),
           args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
   )
 }
@@ -445,13 +447,13 @@ for (q in 1:4) {
   # 10. Draw barplot
   barplot(mat,
           col = cols[rownames(mat)],
-          main = paste('F & M - Q', q, '2015'),
+          main = paste('Fi - F & M - Q', q, '2015'),
           names.arg = label_map[levels(means_df$class)], #x_labels_vec,
           las = 2,
           cex.main = 2,
           cex.axis = 1.5,
           cex.names = 1.5,
-          ylim = c(0,12), #c(0, max(colSums(mat)) * 1.1),
+          ylim = c(0,8), #c(0, max(colSums(mat)) * 1.1),
           # width = width_vector_all,
           space = 0,
           beside = FALSE,
@@ -466,9 +468,14 @@ for (q in 1:4) {
 bothPF_params = parameters_solv
 bothPF_params$general_params$Fi = 0.1 #increased fishery
 
-start <- Sys.time()
-test_bothPF <- solver_sizeClass_sex.v3(t = t_5years, state = state, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
-print(Sys.time() - start)
+
+#profvis({
+  start <- Sys.time()
+  test_bothPF <- solver_sizeClass_sex.v3(t = t_5years, state = state, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
+  print(Sys.time() - start)
+#})
+
+
 
 #stacked area plot
 
@@ -585,7 +592,7 @@ for (q in 1:4) {
   # 10. Draw barplot
   barplot(mat,
           col = cols[rownames(mat)],
-          main = paste('F & M - Q', q, '2015'),
+          main = paste('P&Fi - F & M - Q', q, '2015'),
           names.arg = label_map[levels(means_df$class)], #x_labels_vec,
           las = 2,
           cex.main = 2,
@@ -636,8 +643,9 @@ T_avg_2018 = mean(as.numeric(gsub(',','.', t_2018$temperature) ))
 #(1) L_avg over the time:
 
 #calculate weighted average for each time step:
-
+size_classes = c(LL, LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3)
 #first join F and M in one column
+#Without preasure (1)
 noPreasure_noSex = test_noPreasure %>%
   mutate(J1 = J_f + J_m, J2 = J2_f + J2_m, J3 = J3_f + J3_m, J4 = J4_f + J4_m,  J5 = J5_f + J5_m,
          A1 = A1_f + A1_m) %>%
@@ -647,18 +655,125 @@ noPreasure_noSex = test_noPreasure %>%
 
 noPreasure_noSex = noPreasure_noSex[, c(1,2,6,7,8,9,10,11,3,4,12,5)] #rearrange order of columns
 
-size_classes = c(LL, LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3)
-
-
 Lavg_noPreasure = noPreasure_noSex %>%
   mutate(L_avg = (L*LL + J1*LJ + J2*LJ2+ J3*LJ3+ J4*LJ4 + J5*LJ5
                   + A1*LA1 + A2*LA2+ A3*LA2)/ttlB )
 
-plot(noPreasure_noSex$dateTime, Lavg_noPreasure$L_avg, las = 1,  col = 'grey41', cex = 0.8,
-     xlab = 'years', ylab = TeX(r"($\ell$)" ) )   # expression(ell))
+#Only Predation (2)
+predation_noSex = test_pred %>%
+  mutate(J1 = J_f + J_m, J2 = J2_f + J2_m, J3 = J3_f + J3_m, J4 = J4_f + J4_m,  J5 = J5_f + J5_m,
+         A1 = A1_f + A1_m) %>%
+  mutate(ttlB = L + J1+ J2+ J3+ J4+ J5+ A1+ A2 + A3) %>%
+  select(1,2, 15:24) %>%
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+predation_noSex = predation_noSex[, c(1,2,6,7,8,9,10,11,3,4,12,5)] #rearrange order of columns
+
+Lavg_pred = predation_noSex %>%
+  mutate(L_avg = (L*LL + J1*LJ + J2*LJ2+ J3*LJ3+ J4*LJ4 + J5*LJ5
+                  + A1*LA1 + A2*LA2+ A3*LA2)/ttlB )
+
+#Only Predation (3)
+fishery_noSex = test_fishery %>%
+  mutate(J1 = J_f + J_m, J2 = J2_f + J2_m, J3 = J3_f + J3_m, J4 = J4_f + J4_m,  J5 = J5_f + J5_m,
+         A1 = A1_f + A1_m) %>%
+  mutate(ttlB = L + J1+ J2+ J3+ J4+ J5+ A1+ A2 + A3) %>%
+  select(1,2, 15:24) %>%
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+fishery_noSex = fishery_noSex[, c(1,2,6,7,8,9,10,11,3,4,12,5)] #rearrange order of columns
+
+Lavg_fishery = fishery_noSex %>%
+  mutate(L_avg = (L*LL + J1*LJ + J2*LJ2+ J3*LJ3+ J4*LJ4 + J5*LJ5
+                  + A1*LA1 + A2*LA2+ A3*LA2)/ttlB )
+
+#Both predation & fishery (4)
+bothPF_noSex = test_bothPF %>%
+  mutate(J1 = J_f + J_m, J2 = J2_f + J2_m, J3 = J3_f + J3_m, J4 = J4_f + J4_m,  J5 = J5_f + J5_m,
+         A1 = A1_f + A1_m) %>%
+  mutate(ttlB = L + J1+ J2+ J3+ J4+ J5+ A1+ A2 + A3) %>%
+  select(1,2, 15:24) %>%
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+bothPF_noSex = bothPF_noSex[, c(1,2,6,7,8,9,10,11,3,4,12,5)] #rearrange order of columns
+
+Lavg_bothPF = bothPF_noSex %>%
+  mutate(L_avg = (L*LL + J1*LJ + J2*LJ2+ J3*LJ3+ J4*LJ4 + J5*LJ5
+                  + A1*LA1 + A2*LA2+ A3*LA2)/ttlB )
+dev.off()
+
+plot(noPreasure_noSex$dateTime, Lavg_noPreasure$L_avg, las = 1,  col = 'grey', cex = 0.8,
+     xlab = 'years', ylab = paste('l', '[cm]'), ylim = c(1, 5) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
+     main = 'Changes in average size ')
+lines(Lavg_pred$dateTime, Lavg_pred$L_avg, col = 'indianred3', lty=1, lwd = 2.5)
+lines(Lavg_fishery$dateTime, Lavg_fishery$L_avg, col = 'skyblue4', lty=1, lwd = 2.5)
+lines(Lavg_bothPF$dateTime, Lavg_bothPF$L_avg, col = 'hotpink', lty=1, lwd = 2.5)
+
+legend("topright", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.65)
 
 
 
+plot(noPreasure_noSex$dateTime, Lavg_noPreasure$ttlB, las = 1,  col = 'grey', cex = 0.8,
+     xlab = 'years', ylab = 'biomass [?]', type = 'l', lty = 2, lwd = 3,
+     main = 'Changes in biomass ', ylim = c(0, 110) )
+lines(Lavg_pred$dateTime, Lavg_pred$ttlB, col = 'indianred3', lty=1, lwd = 2.5)
+lines(Lavg_fishery$dateTime, Lavg_fishery$ttlB, col = 'skyblue4', lty=1, lwd = 2.5)
+lines(Lavg_bothPF$dateTime, Lavg_bothPF$ttlB, col = 'hotpink', lty=1, lwd = 2.5)
 
+legend("topright", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.6)
+
+
+
+#### now plot L_avg vs Biomass ####
+
+#Now group by the week number and calculate avg of the size
+
+weekly_avg_noPreasure  <- Lavg_noPreasure %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_fish  <- Lavg_fishery %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_pred  <- Lavg_pred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_both  <- Lavg_bothPF %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+init15 = start_date <- as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = start_date <- as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
+
+
+
+plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == 2015], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
+     lwd = 3, col = 'grey', lty=1, ylim = c(5,100), xlim = c(1.5, 4.35) )
+points(weekly_avg_fish$avg_L[weekly_avg_fish$year == 2015], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
+points(weekly_avg_pred$avg_L[weekly_avg_pred$year == 2015], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
+points(weekly_avg_both$avg_L[weekly_avg_both$year == 2015], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
+
+legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
 
 

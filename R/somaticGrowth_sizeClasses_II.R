@@ -82,7 +82,9 @@ parameters_solv = list(
     const_c = 0.01,
     #Fishery
     Fi = 0.05, #only as example for the time being
-    Imax_ik = 0.1
+    Imax_ik = 0.1,
+    a_mu = 0.000913, #aging daily mortality 1/3years
+    L_mat = 5.5 #size at maturation fem [cm]
   )
 )
 
@@ -111,31 +113,6 @@ K_func_briere = function(temperature, sex_params){
   alpha = sex_params$alpha
   beta = sex_params$beta
 
-
-  if(temperature < T_min) { temperature = T_min } #if this true, then T_min is negative and invalid to set to the power of alpha
-
-  diff_min = temperature - T_min
-  diff_max = T_max - temperature
-  diff = T_max - T_min
-  alpha_invert = 1 - alpha
-  toReturn = r_max*( ((diff_min/alpha)^alpha) * ((diff_max/ alpha_invert )^alpha_invert) * (1 / diff)  )^(alpha*alpha_invert/(beta^2) )
-
-  return(max(0, toReturn) ) #3.205227e-06 is the equivalent to K_func_briere(T_min)
-}
-
-
-K_func_briere_old = function(temperature, sex){
-  T_min = 0.5
-  T_max = 30
-  if (sex == 'F'){
-    r_max = 0.007638409
-    alpha = 0.539550
-    beta = 0.277740
-  } else if (sex == 'M'){
-    r_max = 0.01585687
-    alpha = 0.634518
-    beta = 0.299470
-  }
 
   if(temperature < T_min) { temperature = T_min } #if this true, then T_min is negative and invalid to set to the power of alpha
 
@@ -182,20 +159,6 @@ ingestion_rate_b = function(temperature, L, P, general_params, sex_params){
 
 
 
-ingestion_rate_b_old = function(temperature, L, P, sex){
-  c_div = const_c / convertL_to_W(L)
-  #params = sex_parameters_func(sex)
-  #L_infty = params$L_inf
-  if (sex == 'F') L_infty = 8.5
-  if (sex == 'M') L_infty = 5.5
-  #result = m*K_func_briere(temperature, sex)*convertL_to_W(L)*L_infty*(c_div)^(1/m)*( P/(P+alpha_ir) )
-  w = convertL_to_W(L)
-  result = m*K_func_briere(temperature, sex)*(L_infty/L)*( P/(P+alpha_ir) )
-  #m*convertL_to_W(L)*K_func(T)*L_inf/L*P/(P+h) #revised formula Andrea 04.04.25
-  return (result)
-}
-
-
 #' Rate of Biomass from Females that flows into egg biomass
 #'
 #' @param L size [cm]
@@ -211,18 +174,10 @@ spawning_rate_b = function(L, temperature, sex_params){
   factor = 4.336045 #0.95393
   #sex = 'F'
   #if(L>5) s = convertL_to_W(L)*K_func(temperature)*3*epsilon #molting_fraction(L*10, T) * convertL_to_W(L)*K_func(T)*3*epsilon #here L for Temming in mm
-  if(L>5) {
+  if(L>parameters_solv$general_params$L_mat) {
     s = intercept + convertL_to_W(L)*K_func_briere(temperature, sex_params)*3*factor
   }
   #print(paste("spawning_rate_b sucsessful", s) )
-  return(s)
-}
-
-
-
-spawning_rate_old = function(L, temperature){
-  s = 0
-  if(L>5) s = convertL_to_W(L)*K_func_briere(temperature)*3*epsilon #molting_fraction(L*10, T) * convertL_to_W(L)*K_func(T)*3*epsilon #here L for Temming in mm
   return(s)
 }
 
@@ -245,20 +200,6 @@ respiration_rate_b = function(temperature, L, sex_params){
   #  mu =  convertL_to_W(L) *K_func_briere(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
   #}
   #print(paste("respiration_rate_b sucsessful", mu))
-  return(mu)
-}
-
-
-respiration_rate_b_OLD = function(temperature, L){
-  mu = 0
-  if (temperature < 0.5){ #this funtion returns NaN when T (0.0001, 0.4)
-    mu = 2.596234e-06 # equivalent to natural_mortality_b(0.5)
-  } else {
-    if (L>5) {} # nothing happens, mu = 0
-    else{
-      mu = m*convertL_to_W(L)*K_func_briere(temperature)# this is the rigth term of vB eq.
-    }
-  }
   return(mu)
 }
 
@@ -291,7 +232,7 @@ shiftTo_juvenile = function(Te){
 
 
 
-#Selectivity probability
+#Selectivity probability (Fishery)
 sel_probit = function(l, L50 = 4.49 , SR = 1.56){
   nominator = exp( (1.349/SR) * (l - L50))
   denominator = 1 + nominator
@@ -348,13 +289,13 @@ solver_sizeClass_extended_b = function(t, state, parameters, temperature_dataSet
       IJ2 = ingestion_rate_b(Te,LJ2,P, 'F')
       mJ2 = respiration_rate_b(Te, LJ2, 'F')
       gJ2 = shift_next_sizeClass(LJ2, Te, 'F')
-      dJ2.dt = gJI*J + IJ2*J2 - mJ2*J2 - gJ2*J2 # - sA1*A1
+      dJ2.dt = gJI*J + IJ2*J2 - mJ2*J2 - gJ2*J2
 
       #Juv III
       IJ3 = ingestion_rate_b(Te,LJ3,P, 'F')
       mJ3 = respiration_rate_b(Te, LJ3, 'F')
       gJ3 = shift_next_sizeClass(LJ3, Te, 'F')
-      dJ3.dt = gJ2*J2 + IJ3*J3 - mJ3*J3 - gJ3*J3 # - sA1*A1
+      dJ3.dt = gJ2*J2 + IJ3*J3 - mJ3*J3 - gJ3*J3
 
       #Juv IV
       IJ4 = ingestion_rate_b(Te,LJ4,P, 'F')
@@ -807,7 +748,8 @@ solver_sizeClass_sex.v3 = function(t, state, parameters, temperature_dataSet){
     mA1_m = respiration_rate_b(Te, LA1,  parameters$M_params)
     gA1_m = shift_next_sizeClass(LA1, Te, parameters$M_params)
     fmA1_m = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(A1_m) #fishing mortality
-    dA1_m.dt = gJ5_m*J5_m + IA1_m*A1_m - mA1_m*A1_m - gA1_m*A1_m  - fmA1_m*A1_m #they actiually don't growth no a next size class, but let's say this is mortality, they growth old
+    aging_mu = parameters$general_params$a_mu
+    dA1_m.dt = gJ5_m*J5_m + IA1_m*A1_m - mA1_m*A1_m - aging_mu*A1_m  - fmA1_m*A1_m #they actiually don't growth no a next size class, but let's say this is mortality, they growth old
 
     #Adult II F (only F reach this size class)
     IA2 = ingestion_rate_b(Te, LA2, P, parameters$general_params, parameters$Fem_params)
@@ -825,7 +767,8 @@ solver_sizeClass_sex.v3 = function(t, state, parameters, temperature_dataSet){
     mA3 = respiration_rate_b(Te, LA3, parameters$Fem_params)
     molA3 = molting_fraction(LA3, Te)
     fmA3 = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(A3) #fishing mortality
-    dA3.dt = gA2*A2 + IA3*A3 - mA3*A3 - sA3*A3*molA3 - fmA3*A3
+    aging_mu = parameters$general_params$a_mu
+    dA3.dt = gA2*A2 + IA3*A3 - mA3*A3 - sA3*A3*molA3 - fmA3*A3 - aging_mu*A3
 
     #Eggs
     dE.dt =  sA1_f*A1_f*molA1_f + sA2*A2*molA2 + sA3*A3*molA3 - gE*E # mA1*E: for adults, m equals cero because this is transfered to the spawning.therefore make only sense to add mu of adults related to fishery (?)
