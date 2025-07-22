@@ -52,7 +52,7 @@ K_func = function(temperature){
 #'
 #' @examples ingestion_rate(temperature = 15, L = 55, P)
 
-ingestion_rate = function(temperature, L, P, sex_params){
+ingestion_rate_outdated = function(temperature, L, P, sex_params){
   c_div = const_c / convertL_to_W(L)
   result = m*K_func(temperature)*convertL_to_W(L)*L_inf*(c_div)^(1/m)*( P/(P+alpha_ir) )
 
@@ -98,7 +98,7 @@ molting_fraction <- function(L, temperature){
 #' @export
 #'
 #' @examples
-spawning_rate = function(L, temperature){
+spawning_rate_outdated = function(L, temperature){
   s = 0
   intercept = 3.54616
   factor = 4.40332
@@ -142,20 +142,6 @@ new_food = function(t) {
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
   return(toReturn)
 }
-
-
-
-hatch_eggs = function(Te){
-  Te = max(0.00001, Te)
-  return(1/ (1031.34*Te^-1.345)) #return the ratio
-}
-
-shiftTo_juvenile = function(Te){
-  Te = max(0.00001, Te)
-  dev_time = 941.7808*Te^-1.347
-  return(1 / dev_time) #return the ratio
-}
-
 
 
 

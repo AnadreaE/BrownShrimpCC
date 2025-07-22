@@ -14,7 +14,7 @@ ingestion_rate_b(temperature, L, P, general_params, sex_params)
 \item{P}{Plancton (variable state)}
 }
 \value{
-growth rate in weight \link{gr / time }
+growth rate in weight \link{g day-1}
 }
 \description{
 Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)

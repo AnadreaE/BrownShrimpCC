@@ -26,6 +26,14 @@ state = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
            A2 = 5.443*0.375, A3=5.443*0.125, #males doesn't reach this size classes
            Pred = 0.05 )
 
+state_rc = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+             J_f = 0.1, J2_f = 0.1, J3_f = 0.1 , J4_f = 0.1, J5_f = 0.1,
+             J_m = 0.1 , J2_m = 0.1, J3_m = 0.1, J4_m = 0.1, J5_m = 0.1,
+             A1_f = 0.1, A1_m = 0.1,
+             A2 = 0.1, A3=0.1, #males doesn't reach this size classes
+             Pred = 0.05 )
+
+
 #Ref: Larv: 0.0928 kg/1000m2 but lets say that wihtout predation this is 50% bigger
 #Ref Fem: 5.443 kg/1000m2 has to be distributed over the 3 Fem adult size classes: we know that A1 > A2 > A3 in biomass
 #therefore lets consider following ratio: A1: 0.5, A2: 0.375, A3: 0.125
@@ -42,17 +50,13 @@ noPreasure_params$general_params$Imax_ik = 0 #No predation
 
 
 start <- Sys.time()
-test_noPreasure <- solver_sizeClass_sex.v3(t = t_5years, state = state, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
+test_noPreasure <- solver_sizeClass_sex.v3(t = t_5years, state = state_rc, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 
 #stacked area plot
 
-start_date <- as.POSIXct("2014-01-01", format="%Y-%m-%d", tz = "UTC")
-
-test_noPreasure <- mutate(test_noPreasure, dateTime = start_date + test_noPreasure$time * 86400) #86400 seconds in one day
-
-test_noPreasure <- test_noPreasure[ , -c(1,2,19)] # delete timesteps column and predator column
+#test_noPreasure <- test_noPreasure[ , -c(1,2,19)] # delete timesteps column and predator column
 
 #cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
 test_noPreasure_long <- test_noPreasure %>%
@@ -468,10 +472,16 @@ for (q in 1:4) {
 bothPF_params = parameters_solv
 bothPF_params$general_params$Fi = 0.1 #increased fishery
 
+state_rc = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+          J_f = 0.1, J2_f = 0.1, J3_f = 0.1 , J4_f = 0.1, J5_f = 0.1,
+          J_m = 0.1 , J2_m = 0.1, J3_m = 0.1, J4_m = 0.1, J5_m = 0.1,
+          A1_f = 0.1, A1_m = 0.1,
+          A2 = 0.1, A3=0.1, #males doesn't reach this size classes
+          Pred = 0.05 )
 
 #profvis({
   start <- Sys.time()
-  test_bothPF <- solver_sizeClass_sex.v3(t = t_5years, state = state, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
+  test_bothPF <- solver_sizeClass_sex.v3(t = t_5years, state = state_rc, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
   print(Sys.time() - start)
 #})
 
@@ -479,9 +489,6 @@ bothPF_params$general_params$Fi = 0.1 #increased fishery
 
 #stacked area plot
 
-start_date <- as.POSIXct("2014-01-01", format="%Y-%m-%d", tz = "UTC")
-
-test_bothPF <- mutate(test_bothPF, dateTime = start_date + test_bothPF$time * 86400) #86400 seconds in one day
 test_bothPF <- test_bothPF[ , -c(1,2,19)] # delete timesteps column and predator column
 
 #cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
@@ -512,8 +519,8 @@ par(mfrow = c(2, 2))
 cols <- c("f" = "#8856a7", "m" = "#add8e6", "U" = "gray80")
 
 # Define x-axis label order (class names)
-x_labels_vec <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1", "A2", "A3")
-label_map <- c(
+x_labels_vec.v3 <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1", "A2", "A3")
+label_map.v3 <- c(
   "E" = "E",
   "L" = "i-0.6",
   "J" = "0.6-1",
@@ -608,7 +615,7 @@ for (q in 1:4) {
 }
 
 
-### YEARS TEMPERATURE AVG
+### YEARS TEMPERATURE AVG ####
 
 t_2014 = temperature_dataSet %>%
   filter(as.Date(date_time, format= "%d/%m/%Y %H:%M") > as.Date("31/12/2013", format= "%d/%m/%Y" ) &
@@ -762,8 +769,8 @@ weekly_avg_both  <- Lavg_bothPF %>%
   group_by(year, week) %>%
   summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
 
-init15 = start_date <- as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
-end15 = start_date <- as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
+init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
 
@@ -781,13 +788,258 @@ legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'b
 
 ############
 
-state = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+
+params_test_r = parameters_solv
+params_test_r$general_params$Fi = 0.1
+
+
+state_r = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
           BF = BF+0.1, BM = BM+0.1,
           Pred = 0.05 )
+
 start <- Sys.time()
-test_r = solver_sizeClass.v4(t = t_5years, state = state, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
+test_r = solver_sizeClass.v4(t = t_5years, state = state_r, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
+plot(test_noPreasure$time, test_noPreasure[, 4], xlim = c(0,50), ylim = c(0,1000))
+for (i in 5:11){
+  lines(test_noPreasure$time, test_noPreasure[, i])
+}
 
-plot(test_r$time,test_r[,2],col=8,type='n',ylim=c(-1,200))
-for(i in 2:18)lines(test_r$time,test_r[,i],col=i)
+#plot(test_r$time,test_r[,2],col=8,type='n',ylim=c(-1,50))
+#dev.off()
+#for(i in 2:18)lines(test_r$time,test_r[,i],col=i)
+
+
+
+
+### Check eeg produciton of V3 and V4:
+dev.off()
+plot(as.Date(test_noPreasure$dateTime, format= "%d/%m/%Y" ), test_noPreasure$produced_eggs, col = 'pink',
+     lwd = 2, xlim = c(as.Date("01/04/2014", format= "%d/%m/%Y" ), as.Date("01/08/2014", format= "%d/%m/%Y" )),
+    main = 'comparision egg proudction'  ,ylim = c(0, 1.00)) #, ylim = c(0,0.01))
+lines(as.Date(test_r$dateTime, format= "%d/%m/%Y") , test_r$produced_eggs.BF1 )
+
+###Check new eggs:
+
+plot(as.Date(test_noPreasure$dateTime, format= "%d/%m/%Y" ), test_noPreasure$new_eggs, col = 'pink',
+     lwd = 2, xlim = c(as.Date("01/04/2014", format= "%d/%m/%Y" ), as.Date("01/12/2014", format= "%d/%m/%Y" )),
+     main = 'comparision new eggs',ylim = c(0, .600)) #, ylim = c(0,0.01))
+lines(as.Date(test_r$dateTime, format= "%d/%m/%Y") , test_r$new_eggs )
+
+
+#Check weather high egg production is related to overgrowth on fem adults
+
+Bfem_2014.V3 = test_noPreasure %>%
+  filter(as.Date(dateTime, format = '%d/%m/%Y') < as.Date("30/05/2014", format = '%d/%m/%Y')
+         & as.Date(dateTime, format = '%d/%m/%Y') > as.Date("15/04/2014", format = '%d/%m/%Y')) %>%
+  mutate(Bfem = A1_f + A2 + A3) %>%
+  select(c(Bfem, dateTime) )
+
+Bfem_2014.V4 = test_r %>%
+  filter(as.Date(dateTime, format = '%d/%m/%Y') < as.Date("30/05/2014", format = '%d/%m/%Y')
+         & as.Date(dateTime, format = '%d/%m/%Y') > as.Date("15/04/2014", format = '%d/%m/%Y')) %>%
+  mutate(Bfem = BF6 + BF7 + BF8) %>%
+  select(c(Bfem, dateTime) )
+
+
+plot(Bfem_2014.V3$dateTime, Bfem_2014.V3$Bfem, lwd = 2, col = 'pink',
+     main = 'comparision Biomass Fems V3 vs V4', ylim = c(0,50) )
+lines(Bfem_2014.V4$dateTime, Bfem_2014.V4$Bfem)
+
+test = spawning_rate_b(8.1)
+
+#compare juvI :
+BjuvI_2014.V3 = test_noPreasure %>%
+  filter(as.Date(dateTime, format = '%d/%m/%Y') < as.Date("01/04/2014", format = '%d/%m/%Y')) %>%
+  mutate(BjuvI = J_f + J_m) %>%
+  select(c(BjuvI, dateTime, P) )
+
+BjuvI_2014.V4 = test_r %>%
+  filter(as.Date(dateTime, format = '%d/%m/%Y') < as.Date("01/04/2014", format = '%d/%m/%Y')) %>%
+  mutate(BJuvI = BF1 + BM1) %>%
+  select(c(BJuvI, dateTime, P) )
+
+
+plot(BjuvI_2014.V3$dateTime, BjuvI_2014.V3$BjuvI, lwd = 2, col = 'pink',
+     main = 'comparision Biomass JuvI V3 vs V4', ylim = c(0,10) )
+lines(BjuvI_2014.V4$dateTime, BjuvI_2014.V4$BJuvI)
+
+#Check Ingestion rate larvae:
+plot(as.Date(test_noPreasure$dateTime, format= "%d/%m/%Y" ), test_noPreasure$ing_rateL, col = 'pink',
+     lwd = 3, xlim = c(as.Date("01/01/2014", format= "%d/%m/%Y" ), as.Date("01/02/2014", format= "%d/%m/%Y" )),
+     main = 'comparision ingestion rate'  ,ylim = c(0, 0.3190)) #, ylim = c(0,0.01))
+points(as.Date(test_r$dateTime, format= "%d/%m/%Y") , test_r$ing_rateL, lwd=2 )
+
+
+#check plankton
+plot(as.Date(test_noPreasure$dateTime, format= "%d/%m/%Y" ), test_noPreasure$P, col = 'pink',
+     lwd = 2, xlim = c(as.Date("01/01/2014", format= "%d/%m/%Y" ), as.Date("01/04/2014", format= "%d/%m/%Y" )),
+     main = 'comparision Plankton Biomass'  )#,ylim = c(0, 0.0150)) #, ylim = c(0,0.01))
+lines(as.Date(test_r$dateTime, format= "%d/%m/%Y") , test_r$P )
+
+#check larvae
+plot(as.Date(test_noPreasure$dateTime, format= "%d/%m/%Y" ), test_noPreasure$L, col = 'pink',
+     lwd = 2, xlim = c(as.Date("01/01/2014", format= "%d/%m/%Y" ), as.Date("01/04/2014", format= "%d/%m/%Y" )),
+     main = 'comparision Larvae'  )#,ylim = c(0, 0.0150)) #, ylim = c(0,0.01))
+lines(as.Date(test_r$dateTime, format= "%d/%m/%Y") , test_r$L )
+
+
+###
+#test_r <- test_r[ , -c(1,2)] # delete timesteps, P and predator column
+
+test_r_2015 = test_r %>%
+  filter(as.Date(test_r$dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" ) &
+           as.Date(test_r$dateTime) < as.Date("31/12/2016", format= "%d/%m/%Y") ) %>%
+  select(E, L, BF1, BF2, BF3, BF4, BF5, BF6, BF7, BF8, BM1, BM2, BM3, BM4, BM5)
+
+# Bar plot F & M together
+
+
+# Define colors for each sex: f = light blue, m = steel blue, U = gray
+# Define x-axis label order (class names)
+x_labels_vec.v3 <- c("E", "L", "J", "J2", "J3", "J4", "J5", "A1", "A2", "A3")
+
+cols <- c("f" = "#8856a7", "m" = "#add8e6")
+bg_col <- "grey90"  # light grey for background
+
+# Define x-axis label order (class names)
+x_labels_vec <- c( "BF1", "BF2", "BF3", "BF4", "BF5", "BF6", "BF7", "BF8")
+label_map <- c(
+  "BF1" = "1-2",
+  "BF2" = "2-3",
+  "BF3" = "3-4",
+  "BF4" = "4-5",
+  "BF5" = "5-6",
+  "BF6" = "6-7",
+  "BF7" = "7-8",
+  "BF8" = "8.5"
+)
+#width_vector_all <- rep(1, length(x_labels_vec))  # Optional bar widths
+
+
+
+# Define size classes to include and their order
+class_labels <- c("BF1", "BF2", "BF3", "BF4", "BF5", "BF6", "BF7", "BF8")
+label_map <- setNames(class_labels, class_labels)
+
+# Set up 2x2 plot grid for 4 quarters
+par(mfrow = c(2, 2))
+
+for (q in 1:4) {
+  # Indices for quarter (912 time steps per quarter)
+  init_idx <- 912 * (q - 1) + 1
+  final_idx <- 912 * q
+  #prepare test_r V4:
+  quarter_data <- test_r_2015[init_idx:final_idx, ]
+
+  # 1. Extract female and male size class columns
+  female_cols <- paste0("BF", 1:8)
+  male_cols   <- paste0("BM", 1:5)
+
+  # 2. Compute means
+  f_means <- colMeans(quarter_data[, female_cols])
+  m_means <- colMeans(quarter_data[, male_cols])
+
+  # 3. Stackable part: BF1–BF5 with BM1–BM5
+  stack_classes <- paste0("BF", 1:5)
+  f_stack <- f_means[stack_classes]
+  m_stack <- m_means  # BM1–BM5 assumed to match BF1–BF5 by order
+
+  # 4. Non-stackable part: BF6–BF8 (females only)
+  f_extra_classes <- paste0("BF", 6:8)
+  f_extra <- f_means[f_extra_classes]
+
+  # 5. Construct matrix for barplot: one row per sex, one column per size class
+  # Columns: BF1–BF5 (stacked), BF6–BF8 (female only)
+  f_vals <- c(f_stack, f_extra)
+  m_vals <- c(m_stack, rep(0, length(f_extra)))  # No males for BF6–BF8
+
+  mat <- rbind("f" = f_vals, "m" = m_vals)
+
+  #PREPARE test V3
+  quarter_data <- M_F_2015[init_idx:final_idx, ]
+
+  # 1. Get sexed class columns (e.g., J_f, J2_m, A1_f, etc.)
+  sexed_df <- quarter_data %>%
+    select(matches("^(J|A1)\\d?_f$|^(J|A1)\\d?_m$"))
+
+  fem_df2 <- quarter_data %>%
+    select( A2, A3)
+
+  # 3. Compute column means
+  sexed_means <- colMeans(sexed_df)
+  fem_means <- colMeans(fem_df2)
+
+  # 4. Create long-format data frame for sexed
+  sexed_df_long <- data.frame(
+    class_sex = names(sexed_means),
+    value = as.numeric(sexed_means)
+  ) %>%
+    separate(class_sex, into = c("class", "sex"), sep = "_")
+
+  # 5. Create long-format data frame for unsexed, with sex = "U"
+  unsexed1_df_long <- data.frame(
+    class = names(fem_means),
+    value = as.numeric(fem_means),
+    sex = "f"
+  )
+
+  # 6. Combine both
+  means_df <- bind_rows(sexed_df_long, unsexed1_df_long)
+
+  # 7. Set class as factor to preserve desired order
+  means_df$class <- factor(means_df$class, levels = x_labels_vec.v3)
+
+  means_df$label <- label_map[as.character(means_df$class)]
+
+  # 8. Pivot to wide format for barplot
+  means_mat <- means_df %>%
+    pivot_wider(names_from = sex, values_from = value, values_fill = 0 ) %>%
+    arrange(class) %>%
+    select(any_of(c("f", "m")))  # Ensure consistent column order
+
+  # 9. Transpose to matrix for barplot (rows = sex, columns = classes)
+  matv3 <- t(as.matrix(means_mat))
+
+
+  # Plot barplot V4 (background because B is higher)
+  barplot(
+    mat,
+    col = cols[rownames(mat)],
+    main = paste("Quarter", q, "– 2015"),
+    names.arg = label_map,
+    las = 2,
+    cex.main = 1.5,
+    cex.axis = 1.2,
+    cex.names = 1.2,
+    ylim = c(0, max(colSums(mat)) * 1.1),
+    space = 0,
+    beside = FALSE,
+    legend.text = rownames(mat),
+    args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
+  )
+
+  # Draw barplot V3
+  barplot(matv3,
+          col = rgb(0.9, 0.9, 0.9, alpha = 0.75), #col gray a bit transparent#cols[rownames(matv3)],
+          main = paste('P&Fi - F & M - Q', q, '2015'),
+          names.arg = label_map[levels(means_df$class)], #x_labels_vec,
+          las = 2,
+          #cex.main = 2,
+          #cex.axis = 1.5,
+          #cex.names = 1.5,
+          #ylim = c(0,3),#c(0, max(colSums(mat)) * 1.1),
+          # width = width_vector_all,
+          space = 0,
+          add = TRUE,
+          border = NA,
+          axisname = FALSE,
+          beside = FALSE,
+          #legend.text = rownames(mat),
+         # args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1, y.intersp = 0.5)
+  )
+}
+
+
+

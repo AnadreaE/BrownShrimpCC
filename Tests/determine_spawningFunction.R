@@ -27,8 +27,9 @@ abline(h = 1, lty= 2)
 
 avg_weight_egg = 17.725*10^-6 #[gr] ~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
 temp_range = seq(0,30, 0.1)
+mat_size_range = seq(5.5, 8.5, by = 0.1)
 
-fem_abundance <- 100 #number of females (we will consider first also a constant size L=6 cm)
+fem_abundance <- 1 #number of females (we will consider first also a constant size L=6 cm)
 L_test1 <- 6 #cm
 
 #TEMING
@@ -49,28 +50,79 @@ eggs_production_AF <- c()
 
 spawning_rate_vB <- function(L, temperature){
   s = 0
-  if(L>5) s = convertL_to_W(L)*K_func(temperature)*3
+  if(L>5.5) s = convertL_to_W(L)*K_func(temperature)*3
   return(s)
 }
 
-for (i in temp_range){
-  prod_temming <- fem_abundance*molting_fraction(L_test1, i)*number_eggs(L_test1*10) #L*10 because Temming's fomula is in mm
-  B_fe = convertL_to_W(6)
-  prod_AF <- B_fe*fem_abundance*molting_fraction(L_test1, i)*spawning_rate_vB(L_test1, i)#, parameters_solv$Fem_params) #Biommass
-  eggs_production_temming <- append(eggs_production_temming, prod_temming) #number of eggs
-  eggs_production_AF <- append(eggs_production_AF, prod_AF) #biomass
+
+spawning_s = data.frame(row = seq(1, length(temp_range)))
+egg_prod_T = data.frame(row = seq(1, length(temp_range)))
+
+for (s in mat_size_range){
+  eggs_production_temming = c()
+  eggs_production_AF = c()
+  for (i in temp_range){
+    prod_temming <- fem_abundance*number_eggs(s*10) #L*10 because Temming's fomula is in mm
+    B_fe = convertL_to_W(s)
+    #prod_AF <- B_fe*fem_abundance*spawning_rate_vB(s, i)#, parameters_solv$Fem_params) #Biommass
+    prod_AF <-fem_abundance*spawning_rate_vB(s, i)#, parameters_solv$Fem_params) #Biommass
+    eggs_production_temming <- append(eggs_production_temming, prod_temming) #number of eggs
+    eggs_production_AF <- append(eggs_production_AF, prod_AF) #biomass
+  }
+  spawning_s[as.character(s)] <- eggs_production_AF
+  egg_prod_T[as.character(s)] <- eggs_production_temming
 }
+
 
 
 #Now plot to compare biomass
 
-Teming_biomass = eggs_production_temming*avg_weight_egg #[gr]
+Teming_biomass = egg_prod_T[, 2:ncol(egg_prod_T)]*17.725*10^-6#eggs_production_temming*avg_weight_egg #[gr]
 
-plot(temp_range, Teming_biomass, main = "Egg production Temming vs Bertalanffy \n  Nr. Fems. = 100, L=6cm",
+factor = c()
+for (i in 1:ncol(Teming_biomass)){
+  B_i = convertL_to_W(mat_size_range[i])
+  factor = append(factor, Teming_biomass[[i]][1]/B_i)
+}
+
+B_sc =  convertL_to_W(mat_size_range)
+logx = log(B_sc)
+logy = log(factor)
+
+
+fit_factortsLog = lm(logy ~ logx)
+
+summary(fit_factortsLog)
+
+log_a <- coef(fit_factortsLog)[1]
+b_est <- coef(fit_factortsLog)[2]
+a_est <- exp(log_a)
+
+plot(B_sc, factor, log = 'xy')
+lines(B_sc, a_est * B_sc^b_est, col = 'red')
+
+plot(B_sc, factor, ylim = c(0.2, 0.4))
+lines(B_sc, a_est * B_sc^b_est, col = 'red')
+
+
+
+
+
+#FUNCTION TO CALCULATE BIOMASS OF EGGS PRODUCED by 12 individual (only in dependency of L)
+
+egg_biomass = function(L){
+  return(L*(coef(fit_fact + )))
+}
+
+
+
+
+
+plot(temp_range, Teming_biomass[['6']], main = "Egg production Temming vs Bertalanffy \n  Nr. Fems. = 100, L=6cm",
      xlab = 'T [°C]', ylab = 'Biomass [gr]', col = 'gray41', las = 1, lwd = 2,
      cex.main = 1.35, cex.lab = 1.5, cex.axis = 1.25)#, ylim = c(0,8))
-lines(temp_range, eggs_production_AF, col = 'maroon', lwd = 3)
-abline(v = temp_range[which.max(Teming_biomass)], lty = 2)
+lines(temp_range, spawning_s[['6']], col = 'maroon', lwd = 3)
+#abline(v = temp_range[which.max(Teming_biomass)], lty = 2)
 legend("topleft",
        legend = c("Benchark", "v. Bertalanffy k*w", "T_opt"),
        col = c("gray41", 'maroon', "black"),
@@ -83,15 +135,54 @@ legend("topleft",
 #decay of curve after passing optimal temperature. As I will consder the effect of thermal performance curve,
 #the fit will be carried out only for all results bellow T_op = 16.2°C.
 
+intercepts = c()
+factors = c()
 
-fit <- lm(Teming_biomass[1:163] ~ eggs_production_AF[1:163])
-summary(fit)
-intercept = fit$coefficients[1] #3.49198
-factor = fit$coefficients[2]#0.95393
+for (i in colnames(Teming_biomass)){
+  fit <- lm(Teming_biomass[[i]][1:163] ~ spawning_s[[i]][1:163])
+  #summary(fit)
+  intercepts = append(intercepts, fit$coefficients[1] ) #3.49198
+  factors = append(factors, fit$coefficients[2])#0.95393
+
+}
+
+#Check relation between intercepts and factors with length
+
+plot(mat_size_range, intercepts)
+
+plot(mat_size_range, factors)
+
+#fit linearly:
+
+fit_intercepts = lm(intercepts ~ mat_size_range)
+summary(fit_intercepts)
+plot(mat_size_range, intercepts, ylim = c(0, 0.02))
+lines(mat_size_range, predict(fit_intercepts))
+
+fit_factors = lm(factors ~ mat_size_range)
+summary(fit_factors)
+plot(mat_size_range, factors)
+lines(mat_size_range, predict(fit_factors))
+
+##### conclusion ####
+#Spanwning rate is dependet on temperature and lenght:
+
+spawning_rate = function(L, Te){
+  interc = coef(fit_intercepts)[1] + L*coef(fit_intercepts)[2]
+  fact = coef(fit_factors)[1] + L*coef(fit_factors)[2]
+  return(B_fe*fem_abundance*molting_fraction(s, i)*spawning_rate_vB(s, i))
+}
+
+
+
+
 
 plot(temp_range, Teming_biomass, main = "Temming vs AF fitted \n with constant T and for L=6cm",
      xlab = 'T', ylab = 'Biomass')
 lines(temp_range, intercept + eggs_production_AF*factor, col = 'orangered3', lwd = 2)
+
+
+
 
 
 #END OF REVISED VERSION 30.05.25
