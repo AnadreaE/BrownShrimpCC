@@ -65,4 +65,78 @@ temperature_funcSolver <- function(df, t){
 
 
 
+plot_sizeSpectra = function(sol_df, year, title){
+  #First filter only the desired year
+  past_year = paste0("31/12/", as.character(year-1))
+  next_year = paste0("01/01/", as.character(year+1))
+  sim_year = year - as.numeric(format(test_noPreasure$dateTime[1], "%Y")) #e.g. first year of simulation sim_year = 0
+  sol_df_year = sol_df %>%
+    filter(as.Date(sol_df$dateTime) > as.Date(past_year, format= "%d/%m/%Y" ) &
+             as.Date(sol_df$dateTime) < as.Date(next_year, format= "%d/%m/%Y") ) %>%
+    select(BF1, BF2, BF3, BF4, BF5, BF6, BF7, BF8, BM1, BM2, BM3, BM4, BM5)
+
+
+  cols <- c("f" = "#8856a7", "m" = "#add8e6")
+
+  # Define size classes to include and their order
+  class_labels <- c("BL1", "BL2", "BL3", "BL4", "BL5", "BL6", "BL7", "BL8")
+  label_map <- setNames(class_labels, class_labels)
+
+  # Set up 2x2 plot grid for 4 quarters
+  par(mfrow = c(2, 2))
+
+  for (q in 1:4) {
+    # Indices for quarter (912 time steps per quarter)
+    init_idx <-  912 * (q - 1) + 1
+    final_idx <- 912 * q
+    #prepare quarterly data:
+    quarter_data <- sol_df_year[init_idx:final_idx, ]
+
+    # 1. Extract female and male size class columns
+    female_cols <- paste0("BF", 1:8)
+    male_cols   <- paste0("BM", 1:5)
+
+    # 2. Compute means
+    f_means <- colMeans(quarter_data[, female_cols])
+    m_means <- colMeans(quarter_data[, male_cols])
+
+    # 3. Stackable part: BF1–BF5 with BM1–BM5
+    stack_classes <- paste0("BF", 1:5)
+    f_stack <- f_means[stack_classes]
+    m_stack <- m_means  # BM1–BM5 assumed to match BF1–BF5 by order
+
+    # 4. Non-stackable part: BF6–BF8 (females only)
+    f_extra_classes <- paste0("BF", 6:8)
+    f_extra <- f_means[f_extra_classes]
+
+    # 5. Construct matrix for barplot: one row per sex, one column per size class
+    # Columns: BF1–BF5 (stacked), BF6–BF8 (female only)
+    f_vals <- c(f_stack, f_extra)
+    m_vals <- c(m_stack, rep(0, length(f_extra)))  # No males for BF6–BF8
+
+    mat <- rbind("f" = f_vals, "m" = m_vals)
+
+    # Plot barplot V4 (background because B is higher)
+    barplot(
+      mat,
+      col = cols[rownames(mat)],
+      main = paste(title , "Q", q, "–", as.character(year)),
+      names.arg = label_map,
+      las = 2,
+      cex.main = 1.5,
+      cex.axis = 1.2,
+      cex.names = 1.2,
+      ylim = c(0, max(colSums(mat)) * 1.1),
+      space = 0,
+      beside = FALSE,
+      legend.text = rownames(mat),
+      args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
+    )
+  }
+
+}
+
+
+
+
 

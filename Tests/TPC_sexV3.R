@@ -710,7 +710,7 @@ Lavg_bothPF = bothPF_noSex %>%
 dev.off()
 
 plot(noPreasure_noSex$dateTime, Lavg_noPreasure$L_avg, las = 1,  col = 'grey', cex = 0.8,
-     xlab = 'years', ylab = paste('l', '[cm]'), ylim = c(1, 5) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
+     xlab = 'years', ylab = paste(TeX("$l$"), '[cm]'), ylim = c(1, 5) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
      main = 'Changes in average size ')
 lines(Lavg_pred$dateTime, Lavg_pred$L_avg, col = 'indianred3', lty=1, lwd = 2.5)
 lines(Lavg_fishery$dateTime, Lavg_fishery$L_avg, col = 'skyblue4', lty=1, lwd = 2.5)
@@ -1033,7 +1033,7 @@ for (q in 1:4) {
           # width = width_vector_all,
           space = 0,
           add = TRUE,
-          border = NA,
+          #border = NA,
           axisname = FALSE,
           beside = FALSE,
           #legend.text = rownames(mat),
