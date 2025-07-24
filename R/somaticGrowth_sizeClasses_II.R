@@ -856,23 +856,23 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
 
     #LARVAE
     gE = hatch_eggs(Te)
-    IL = ingestion_rate_b(Te, LL, P, parameters$general_params, parameters$Fem_params)
+    IL = ingestion_rate_b(Te, LJ, P, parameters$general_params, parameters$Fem_params)#note that LJ is arbitrarily chossen as LL gives unrealistc values
     mL = respiration_rate_b(Te,LL, parameters$Fem_params)
     gL = shiftTo_juvenile(Te)
     pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
     dL.dt = gE*E + IL*L - mL*L - gL*L - pL*L
 
-    consumed_plankton = consumed_plankton + IL*L
+    consumed_plankton = consumed_plankton + IL*L #updates plancton consumed by larvae
 
     promoting_L = gL*L
     produced_eggs = 0
 
     promoting_f = 0.5*promoting_L
     promoting_sizeClass = 0
-    s_i = 0
-    m_i = 0
-    I_i_f=0
     mol_i = 0
+
+    mortality_eggs = 0
+
     #Juvenile or adult shrimp F
     for(i in 1:N_max_F){
       I_i_f = ingestion_rate_b(Te, size_mean_F[i], P, parameters$general_params, parameters$Fem_params)
@@ -889,6 +889,7 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
       dBF.dt[i] = promoting_f + promoting_sizeClass + BF[i]*(I_i_f- m_i - s_i*mol_i - g_i - fm_i - pL_i - aging_i)
       promoting_sizeClass = g_i*BF[i]
       produced_eggs = produced_eggs + s_i*mol_i*BF[i]
+      mortality_eggs = s_i*mol_i*( BF[i]*fm_i + BF[i]*pL_i)
       consumed_plankton = consumed_plankton + I_i_f*BF[i]
       promoting_f = 0
     }
@@ -912,7 +913,7 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
     }
 
     #Eggs
-    dE.dt =  produced_eggs - gE*E
+    dE.dt =  produced_eggs - gE*E - mortality_eggs
 
     #Plankton
     #dP.dt = max(0, new_food(t) - consumed_plankton)
@@ -920,7 +921,7 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
 
     return(list(c(dP.dt, dE.dt, dL.dt,
            dBF.dt, dBM.dt,
-           dPred.dt), produced_eggs = produced_eggs, spawning = s_i, ing_rate = I_i_f, ing_rateL = IL, new_eggs=gE ))
+           dPred.dt)))
 
   }
 

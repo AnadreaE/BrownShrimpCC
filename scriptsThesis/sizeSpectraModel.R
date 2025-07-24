@@ -59,7 +59,7 @@ plot_sizeSpectra(test_predation, 2015, title = "Pred")
 
 fishery_params = parameters_solv
 fishery_params$general_params$Imax_ik = 0 #No predation
-#fishery_params$general_params$Fi = 0.01 #reduce fishery
+fishery_params$general_params$Fi = 0.025 #reduced fishery
 
 start <- Sys.time()
 test_fishery <- solver_sizeClass.v4(t = t_5years, state = state_r, parameters = fishery_params, temperature_dataSet = temperature_14_18)
@@ -71,7 +71,7 @@ plot_sizeSpectra(test_fishery, 2015, title = "Fi")
 #### TEST (4 out of 4) PREDATION AND FISHERY####
 
 bothPF_params = parameters_solv
-bothPF_params$general_params$Fi = 0.1 #increased fishery
+bothPF_params$general_params$Fi = 0.025 #reduced fishery
 
 start <- Sys.time()
 test_bothFP <- solver_sizeClass.v4(t = t_5years, state = state_r, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
@@ -93,7 +93,7 @@ size_classes = female_cols <- paste0("BL", 1:8)
 noPreasure_noSex = test_noPreasure %>%
   mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
   mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
-  select(25:29, 10:12,24, ncol(noPreasure_noSex) ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  select(20:24, 10:12,25, 19 ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
   filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
 
 
@@ -105,7 +105,7 @@ L_avg_noPreasure = noPreasure_noSex %>%
 predation_noSex = test_predation %>%
   mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
   mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
-  select(25:29, 10:12,24, ncol(predation_noSex) ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  select(20:24, 10:12,25, 19 ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
   filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
 
 Lavg_pred = predation_noSex %>%
@@ -116,7 +116,7 @@ Lavg_pred = predation_noSex %>%
 fishery_noSex = test_fishery %>%
   mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
   mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
-  select(25:29, 10:12,24, ncol(fishery_noSex) ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  select(20:24, 10:12,25, 19 ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
   filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
 
 Lavg_fishery = fishery_noSex %>%
@@ -127,7 +127,7 @@ Lavg_fishery = fishery_noSex %>%
 bothPF_noSex = test_bothFP %>%
   mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
   mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
-  select(25:29, 10:12,24, ncol(bothPF_noSex) ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  select(20:24, 10:12,25, 19 ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
   filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
 
 Lavg_bothPF = bothPF_noSex %>%
@@ -158,10 +158,108 @@ legend("topright", legend = c('no preasure', 'only predation', 'only fishery', '
        fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.6)
 
 
+#### now plot L_avg vs Biomass ####
+
+#Now group by the week number and calculate avg of the size
+
+weekly_avg_noPreasure  <- L_avg_noPreasure %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_fish  <- Lavg_fishery %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_pred  <- Lavg_pred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_both  <- Lavg_bothPF %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
 
+plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == 2015], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
+     lwd = 3, col = 'grey', lty=1, ylim = c(5,100), xlim = c(1.5, 4.35) )
+points(weekly_avg_fish$avg_L[weekly_avg_fish$year == 2015], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
+points(weekly_avg_pred$avg_L[weekly_avg_pred$year == 2015], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
+points(weekly_avg_both$avg_L[weekly_avg_both$year == 2015], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
 
+legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
+
+
+#### now plot L_avg vs Biomass ####
+
+#Now group by the week number and calculate avg of the size
+
+weekly_avg_noPreasure  <- L_avg_noPreasure %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_fish  <- Lavg_fishery %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_pred  <- Lavg_pred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_both  <- Lavg_bothPF %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
+
+
+par(mfrow = c(1,1))
+year_to_plot = 2015
+plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == year_to_plot], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
+     lwd = 3, col = 'grey', lty=1, ylim = c(30,450), xlim = c(1.5, 6),
+     xlab = "L", ylab = "Biomass", main = paste("increased plancton 1.5 & reduced Fi \n ingestion rate LA corrected", as.character(fishery_params$general_params$Fi)) )
+points(weekly_avg_fish$avg_L[weekly_avg_fish$year == year_to_plot], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
+points(weekly_avg_pred$avg_L[weekly_avg_pred$year == year_to_plot], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
+points(weekly_avg_both$avg_L[weekly_avg_both$year == year_to_plot], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
+
+legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
 
 
 
