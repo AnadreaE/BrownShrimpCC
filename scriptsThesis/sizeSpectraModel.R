@@ -80,6 +80,24 @@ print(Sys.time() - start)
 #Plot size spectra
 plot_sizeSpectra(test_bothFP, 2015, title = "F&P")
 
+#stacked area plot
+
+test_bothFP_red <- test_bothFP[ , c(3:17,19)] # delete timesteps column, plancton  and predator column
+
+#cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
+test_pred_long <- test_bothFP_red %>%
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+
+ggplot(test_pred_long, aes(x = dateTime, y = value, fill = variable)) +
+  geom_area() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "System incl. predation ",
+    x = "Date",
+    y = "Biomass",
+    fill = "Size class"
+  )
+
 
 #### PLOTS TO COMPARE ALL ####
 
@@ -149,7 +167,7 @@ legend("topright", legend = c('no preasure', 'only predation', 'only fishery', '
 
 plot(noPreasure_noSex$dateTime, L_avg_noPreasure$ttlB, las = 1,  col = 'grey', cex = 0.8,
      xlab = 'years', ylab = 'biomass [?]', type = 'l', lty = 2, lwd = 3,
-     main = 'Changes in biomass ', ylim = c(0, 85) )
+     main = 'Changes in biomass ', ylim = c(0, 600) )
 lines(Lavg_pred$dateTime, Lavg_pred$ttlB, col = 'indianred3', lty=1, lwd = 2.5)
 lines(Lavg_fishery$dateTime, Lavg_fishery$ttlB, col = 'skyblue4', lty=1, lwd = 2.5)
 lines(Lavg_bothPF$dateTime, Lavg_bothPF$ttlB, col = 'hotpink', lty=1, lwd = 2.5)
@@ -200,7 +218,7 @@ end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == 2015], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
-     lwd = 3, col = 'grey', lty=1, ylim = c(5,100), xlim = c(1.5, 4.35) )
+     lwd = 3, col = 'grey', lty=1, ylim = c(50,1000), xlim = c(2.5, 4.35) )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == 2015], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
 points(weekly_avg_pred$avg_L[weekly_avg_pred$year == 2015], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
 points(weekly_avg_both$avg_L[weekly_avg_both$year == 2015], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
@@ -252,14 +270,16 @@ end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 par(mfrow = c(1,1))
 year_to_plot = 2015
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == year_to_plot], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
-     lwd = 3, col = 'grey', lty=1, ylim = c(30,450), xlim = c(1.5, 6),
-     xlab = "L", ylab = "Biomass", main = paste("increased plancton 1.5 & reduced Fi \n ingestion rate LA corrected", as.character(fishery_params$general_params$Fi)) )
+     lwd = 3, col = 'grey', lty=1, ylim = c(50,500), xlim = c(2.5, 5),
+     xlab = "L", ylab = "Biomass", main = paste(" ", as.character(fishery_params$general_params$Fi)) )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == year_to_plot], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
 points(weekly_avg_pred$avg_L[weekly_avg_pred$year == year_to_plot], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
 points(weekly_avg_both$avg_L[weekly_avg_both$year == year_to_plot], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
 
 legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
        fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
+
+
 
 
 

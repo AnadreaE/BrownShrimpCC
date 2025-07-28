@@ -4,7 +4,7 @@
 \alias{molting_fraction}
 \title{Fraction of females that are molting and therefore releasing eggs.}
 \usage{
-molting_fraction(L, temperature)
+molting_fraction(L, Te, Fem_params)
 }
 \arguments{
 \item{L}{size \link{cm}}

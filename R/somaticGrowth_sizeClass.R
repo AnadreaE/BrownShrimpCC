@@ -53,6 +53,18 @@ K_func = function(temperature){
 #'
 #' @examples
 
+
+molting_fraction_old = function(L, Te, Fem_params){
+  w = convertL_to_W(L)
+  vB = 3*K_func_briere(Te, parameters_solv$Fem_params)*w
+  interc = 0.01493457*exp(L*-0.10730890)
+  fract = 13.96105*exp(L*-0.5684764)
+  return(interc + vB*fract )
+}
+
+
+
+
 molting_fraction <- function(L, temperature){
   mf = 0
   L=L*10
@@ -66,7 +78,7 @@ molting_fraction <- function(L, temperature){
       mf = (1 / (5.7066 * L^0.7364 * exp(16.2*-0.09363) ) ) #this aviod that fraction increases with higher temperatures than T_opt and even with unrealistic T like 40°
     }
   }
-  #print(paste("molting_fraction sucsessful", mf ))
+
   return ( mf )
 }
 
@@ -100,7 +112,7 @@ respiration_rate = function(temperature,L){
 #'
 #' @examples
 new_food = function(t) {
-  toReturn = 3 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) #reduced to test 24.07. from 0.2 to 1.5
+  toReturn = 1.5 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) #reduced to test 24.07. from 0.2 to 1.5
  # print(paste("new_food sucsessful",  0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) ))
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
   return(toReturn)

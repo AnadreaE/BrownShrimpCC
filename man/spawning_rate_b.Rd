@@ -2,15 +2,27 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{spawning_rate_b}
 \alias{spawning_rate_b}
-\title{Rate of Biomass from Females that flows into egg biomass}
+\title{Egg biomass that one adult Females release in
+dependence of its size.
+NB: This works for all size classes, however, as it is always
+multiplied by molting fraction, where release only for L > maturity
+is implemented, this funciton doesn't include this condition.}
 \usage{
 spawning_rate_b(L)
 }
 \arguments{
 \item{L}{size \link{cm}}
-
-\item{T}{Temperature \link{°C}}
+}
+\value{
+rate \link{g day^-1}
 }
 \description{
-Rate of Biomass from Females that flows into egg biomass
+Egg biomass that one adult Females release in
+dependence of its size.
+NB: This works for all size classes, however, as it is always
+multiplied by molting fraction, where release only for L > maturity
+is implemented, this funciton doesn't include this condition.
+}
+\examples{
+spawning_rate_b(6)
 }

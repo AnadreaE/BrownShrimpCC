@@ -2,7 +2,9 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{respiration_rate_b}
 \alias{respiration_rate_b}
-\title{Respiration rate}
+\title{Respiration rate: is the energy loss.
+NB: as the model includes other types of mortality, respiration rate
+is kept very small, therefore multiplied by 0.1}
 \usage{
 respiration_rate_b(temperature, L, sex_params)
 }
@@ -12,8 +14,10 @@ respiration_rate_b(temperature, L, sex_params)
 \item{L}{size \link{cm}}
 }
 \value{
-\link{gr / time }
+\link{g day^-1 }
 }
 \description{
-Respiration rate
+Respiration rate: is the energy loss.
+NB: as the model includes other types of mortality, respiration rate
+is kept very small, therefore multiplied by 0.1
 }

@@ -2,23 +2,25 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{ingestion_rate_b}
 \alias{ingestion_rate_b}
-\title{Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)}
+\title{Growth in weight for an specific size class 'L' in dependence of
+food resource availability.}
 \usage{
-ingestion_rate_b(temperature, L, P, general_params, sex_params)
+ingestion_rate_b(temperature, L, Food, general_params, sex_params)
 }
 \arguments{
 \item{temperature}{Temperature \link{°C}}
 
 \item{L}{size class \link{cm}}
 
-\item{P}{Plancton (variable state)}
+\item{Food}{Plancton (variable state)}
 }
 \value{
 growth rate in weight \link{g day-1}
 }
 \description{
-Growth in weight for an specific size class 'L' in dependence of resouce availabilty. Applies for sizes between (6 and L_inf)
+Growth in weight for an specific size class 'L' in dependence of
+food resource availability.
 }
 \examples{
-ingestion_rate(temperature = 15, L = 55, P=2, sex = 'F')
+ingestion_rate(temperature = 15, L = 5.5, P=2, parameters_solv$general, parameters_solv$Fem_params)
 }

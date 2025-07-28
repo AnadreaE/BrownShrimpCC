@@ -2,16 +2,21 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{K_func_briere}
 \alias{K_func_briere}
-\title{K func based of flexTPC NB: for the time being all params only for fems}
+\title{K is the vB growth factor transfored to flexTPC to add
+temperature dependency}
 \usage{
 K_func_briere(temperature, sex_params)
 }
 \arguments{
-\item{temperature}{}
+\item{temperature}{\link{°C}}
 }
 \value{
-K value as function of temperature
+K value
 }
 \description{
-K func based of flexTPC NB: for the time being all params only for fems
+K is the vB growth factor transfored to flexTPC to add
+temperature dependency
+}
+\examples{
+K_func_briere(10, parameters_solv$fem_params)
 }

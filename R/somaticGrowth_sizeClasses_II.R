@@ -161,7 +161,7 @@ ingestion_rate_b = function(temperature, L, Food, general_params, sex_params){
 
 
 
-#' Rate of eggs biomass that one adult Females relsease in
+#' Egg biomass that one adult Females release in
 #' dependence of its size.
 #' NB: This works for all size classes, however, as it is always
 #' multiplied by molting fraction, where release only for L > maturity
@@ -174,8 +174,12 @@ ingestion_rate_b = function(temperature, L, Food, general_params, sex_params){
 #'
 #' @examples spawning_rate_b(6)
 spawning_rate_b = function(L){
-  w = convertL_to_W(L)
-  rate =  0.253161 * w^0.1796667
+  #w = convertL_to_W(L)
+  #rate =  0.253161 * w^0.1796667
+  L = L*10
+  temming_nr_egg = 0.01805*L^3.539
+  avg_weight_egg = 17.725*10^-6 #[gr] ~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
+  return(temming_nr_egg*avg_weight_egg)
 }
 
 
@@ -886,9 +890,9 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
       aging_i = 0.0
       if(i == N_max_F) aging_i = parameters$general_params$a_mu
 
-      dBF.dt[i] = promoting_f + promoting_sizeClass + BF[i]*(I_i_f- m_i - s_i*mol_i - g_i - fm_i - pL_i - aging_i)
+      dBF.dt[i] = promoting_f + promoting_sizeClass + BF[i]*(I_i_f- m_i - mol_i*(1/convertL_to_W(i))*s_i - g_i - fm_i - pL_i - aging_i) #old spawning: mol_i*(1/convertL_to_W(i))*s_i
       promoting_sizeClass = g_i*BF[i]
-      produced_eggs = produced_eggs + s_i*mol_i*BF[i]
+      produced_eggs = produced_eggs + s_i*mol_i*BF[i]/convertL_to_W(i)
       mortality_eggs = s_i*mol_i*( BF[i]*fm_i + BF[i]*pL_i)
       consumed_plankton = consumed_plankton + I_i_f*BF[i]
       promoting_f = 0

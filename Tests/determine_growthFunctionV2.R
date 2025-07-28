@@ -46,9 +46,16 @@ sizeClass_means = c(LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3 )
 time_range <- seq(1,1095)
 temperature_range <- seq(0,30, 0.1) #(10,15)
 
-#### Simulations FEMALES ####
+#### (1) Simulations FEMALES ####
+#Here, we use the growth in length function developed in this research to simulate
+#development in 3 years and count the days shrimp take to change from on size class
+#to the next one according to the size class bins from above.
+#The inverse of the K(T) function follows same shape as the development time, therefore
+#we will aim to create a function to describe development time in a linear relation with K(T)
 
+#First calculate K reference values
 k_vals_F = sapply(temperature_range, K_func_briere, parameters_solv$Fem_params)
+
 
 #### JUVI ####
 
@@ -381,33 +388,39 @@ lines(temperature_range_red_aduII, predict(fit_aduII), col = 'red4', lwd = 2)
 legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "red4"))
 
 
-#### FITS SUMMARY  ####
-intercepts = c(coef(fit_JuvI)[1], coef(fit_juvII)[1], coef(fit_juvIII)[1], coef(fit_juvIV)[1], coef(fit_juvV)[1], coef(fit_aduI)[1], coef(fit_aduII)[1])
-factors = c(coef(fit_JuvI)[2], coef(fit_juvII)[2], coef(fit_juvIII)[2], coef(fit_juvIV)[2], coef(fit_juvV)[2], coef(fit_aduI)[2], coef(fit_aduII)[2])
+#### DEV. TIME FITS SUMMARY  ###
+
+#Here we just summerize the results of the linear fits development time funciton:
+interceptsF_devTime = c(coef(fit_JuvI)[1], coef(fit_juvII)[1], coef(fit_juvIII)[1], coef(fit_juvIV)[1], coef(fit_juvV)[1], coef(fit_aduI)[1], coef(fit_aduII)[1])
+factorsF_devTime = c(coef(fit_JuvI)[2], coef(fit_juvII)[2], coef(fit_juvIII)[2], coef(fit_juvIV)[2], coef(fit_juvV)[2], coef(fit_aduI)[2], coef(fit_aduII)[2])
 
 sizeClass_means_reduced = sizeClass_means[1:length(sizeClass_means)-1]
 
-fits_F_df = data.frame( row.names = sizeClass_names[1:length(sizeClass_names)-1], intercept = intercepts, factor = factors)
+fits_F_df = data.frame( row.names = sizeClass_names[1:length(sizeClass_names)-1], intercept = interceptsF_devTime, factor = factorsF_devTime)
 
-#check weather INTERCEPTS show any relation with the mean size of the class:
+#### (2) Check weather INTERCEPTS show any relation with the mean size of the class: ####
 
 #The intercept doesn't seem to follow any relytion with the mean of the size class....
 #we may work only with the mean of all itnercepts as the range is not that big:
 mean_intercept_F = mean(fits_F_df$intercept)
 
-#OR linear regression
 fit_intercepts_F = lm(fits_F_df$intercept ~ sizeClass_means_reduced)
 summary(fit_intercepts_F)
 
-plot(1:(length(sizeClass_names)-1), fits_F_df$intercept)
+plot(1:(length(sizeClass_names)-1), fits_F_df$intercept, xlab = 'size class', ylab = 'intercept for dev. time')
 abline(h= mean(fits_F_df$intercept), lty=2 )
 lines(1:(length(sizeClass_names)-1), predict(fit_intercepts_F), col = 'orange3')
+#As result we see a roughly linear increasing relation, however the average could
+#also represent well the intercept value
 
 
 #check weather FACTORS show any relation with the mean size of the class:
-plot(1:length(sizeClass_means_reduced), fits_F_df$factor, col = 'red', ylim = c(-0.05, 0.8))
+plot(1:length(sizeClass_means_reduced), fits_F_df$factor, col = 'red', ylim = c(-0.05, 0.8),
+     xlab = 'size class', ylab = 'facor for dev. time')
 lines( 1:length(sizeClass_means_reduced), sizeClass_means_reduced/10)
+#As result we see either a linear growing relation, an exponential or a power-law relation
 
+##Test fit to Power-law relation:
 #fit_factorts = nls(fits_df$factor ~ a * exp(b * sizeClass_means_reduced), start = list(a = 0.05, b = 0.2))
 logx = log(sizeClass_means_reduced)
 logy = log(fits_F_df$factor)
@@ -417,18 +430,18 @@ fit_factortsLog_F = lm(logy ~ logx)
 
 summary(fit_factortsLog_F)
 
-log_a <- coef(fit_factortsLog_F)[1]
-b_est <- coef(fit_factortsLog_F)[2]
-a_est <- exp(log_a)
+log_a_F <- coef(fit_factortsLog_F)[1]
+b_est_F <- coef(fit_factortsLog_F)[2]
+a_est_F <- exp(log_a_F)
 
 plot(sizeClass_means_reduced, fits_F_df$factor, log = 'xy')
-lines(sizeClass_means_reduced, a_est * sizeClass_means_reduced^b_est, col = 'red')
+lines(sizeClass_means_reduced, a_est_F * sizeClass_means_reduced^b_est_F, col = 'red')
 
 plot(sizeClass_means_reduced, fits_F_df$factor, ylim = c(0.1, 0.8))
-lines(sizeClass_means_reduced, a_est * sizeClass_means_reduced^b_est, col = 'red')
+lines(sizeClass_means_reduced, a_est_F * sizeClass_means_reduced^b_est_F, col = 'red')
 
 
-#Fit FACTORS EXPONENTIAL
+## test Fit to EXPONENTIAL relation
 fit_factortsExp_F = nls(fits_F_df$factor ~ a * 2^(sizeClass_means_reduced*b),
                       start = list(a = 0.1, b = 0.5))
 summary(fit_factortsExp_F)
@@ -437,11 +450,11 @@ plot(sizeClass_means_reduced, fits_F_df$factor, main = 'Fit exp 2^L function aga
 lines(sizeClass_means_reduced, predict(fit_factortsExp_F), col = 'red')
 
 #### GROWTH FUNCTION OPTION 1 ####
-#here we use the factor as funciton of L mean and only the mean of the intercept:
+#here we use the factor as POWER-LAW function of L mean and only the mean of the intercept:
 
 growth_optionA_t = function(L_mean, temperature, sex_params){
-  intercept = mean_intercept #-0.4968367 #mean_intercept
-  factor = a_est * L_mean^b_est #
+  intercept = mean_intercept_F #-0.4968367 #mean_intercept
+  factor = a_est_F * L_mean^b_est_F #
   k = K_func_briere(temperature, sex_params)
   return(1/ (intercept + factor*(1/k)) )
 }
@@ -451,7 +464,7 @@ growth_optionA_t = function(L_mean, temperature, sex_params){
 par(mfrow = c(3, 3), mar = c(4, 4, 2, 1))
 ind = 1
 for (i in sizeClass_names){
-  plot(temperature_range,  1 / (fits_df[i, 'intercept'] + fits_df[i, 'factor']*(1/k_vals_F) ),
+  plot(temperature_range,  1 / (fits_F_df[i, 'intercept'] + fits_F_df[i, 'factor']*(1/k_vals_F) ),
        main = paste('growth', i ,'vs function'), ylim = c(0, 0.1), ylab = "growth rate",
        las = 1, cex.main = 1.4, cex.lab = 1.3, cex.axis = 1.5 )
   lines(temperature_range, sapply(temperature_range, growth_optionA_t, L_mean = sizeClass_means[ind],
@@ -464,11 +477,11 @@ legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "
 
 
 #### GROWTH FUNCTION OPTION 2 ####
-#here we use both factor and intercept as funciton of L mean:
+#here we test POWER-LAW function and use both factor and intercept as funciton of L mean:
 
 growth_optionB_t = function(L_mean, temperature, sex){
   intercept = -0.538245 + L_mean* 0.003394 #mean_intercept
-  factor = a_est * L_mean^b_est #
+  factor = a_est_F * L_mean^b_est_F #
   k = K_func_briere(temperature, sex)
   return(1/ (intercept + factor*(1/k)) )
 }
@@ -488,7 +501,8 @@ plot.new()  # empty plot
 legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
 
 #CONCLUSION COMPARATION A and B:
-#No major difference, therfore so simplicity and saving computing effort I choose option A
+#No relevant difference, therefore for sake of simplicity and saving computing effort
+#option A was choosen.
 
 #NOW CHECK FACTOR AS EXPONENTIAL FUNCTION
 
@@ -511,7 +525,8 @@ for (i in sizeClass_names){
 
 plot.new()  # empty plot
 legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
-
+#CONCLUSION: in comparision with Power-Law funciton, the deviation on first size class larger and
+#additionally there is signifficant difference in second size class.
 
 
 
@@ -710,7 +725,7 @@ lines(temperature_range_red_MjuvIV, predict(fit_MjuvIV), col = '#1c9099', lwd = 
 legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c("black", "#1c9099"))
 
 #### M JUV V ####
-#No needed
+# M JUV V No needed
 
 development.df_MjuvV <- data.frame(row = seq(1, 1095))
 
@@ -804,23 +819,23 @@ dev.off()
 #With Factors as log-log function
 par(mfrow = c(2,2))
 
-plot(sizeClass_means[1:7], fits_df$intercept, main = "Intercept Female", las = 1, lwd= 2, col = 'gray41',
-     ylab = 'Intercept value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
-abline(h= mean(fits_df$intercept), lty=2 , lwd = 1.5)
-lines(sizeClass_means[1:7], predict(fit_intercepts), col = 'maroon', lwd = 2)
+plot(sizeClass_means[1:7], fits_F_df$intercept, main = "Intercept Female", las = 1, lwd= 2, col = 'gray41',
+     ylab = 'Intercept value', xlab= 'mean L from size class', cex.lab = 1.3, cex.axis = 1.3, cex.main = 1.35)
+abline(h= mean(fits_F_df$intercept), lty=2 , lwd = 1.5)
+lines(sizeClass_means[1:7], predict(fit_intercepts_F), col = 'maroon', lwd = 2)
 
 
-plot(sizeClass_means[1:7], fits_df$factor, log = 'xy', main = "Factor Female", las = 1, lwd= 2, col = 'gray41',
-     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+plot(sizeClass_means[1:7], fits_F_df$factor, log = 'xy', main = "Factor Female", las = 1, lwd= 2, col = 'gray41',
+     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.3, cex.axis = 1.3, cex.main = 1.35)
 lines(sizeClass_means[1:7], a_est * sizeClass_means_reduced^b_est, col = 'maroon', lwd = 2)
 
 plot(sizeClass_means[1:4], fitsM_df$intercept, main = "Intercept Male", las = 1, lwd= 2, col = 'gray41',
-     xlab= 'mean L from size class', ylab = 'Intercept value', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+     xlab= 'mean L from size class', ylab = 'Intercept value', cex.lab = 1.3, cex.axis = 1.3, cex.main = 1.35)
 abline(h= mean(fitsM_df$intercept), lty=2, lwd = 1.5 )
 lines(sizeClass_means[1:4], predict(fit_intercepts_M), col = '#1c9099', lwd = 2)
 
 plot(sizeClass_means[1:4], fitsM_df$factor, log = 'xy', main = "Factor Male", las = 1, lwd= 2, col = 'gray41',
-     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.25, cex.axis = 1.25, cex.main = 1.5)
+     ylab = 'factor value', xlab= 'mean L from size class', cex.lab = 1.3, cex.axis = 1.3, cex.main = 1.35)
 lines(sizeClass_means[1:4], a_est_m * sizeClass_means_reduced_M^b_est_m, col = '#1c9099', lwd = 2)
 
 
