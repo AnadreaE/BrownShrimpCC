@@ -69,7 +69,7 @@ plot_sizeSpectra = function(sol_df, year, title){
   #First filter only the desired year
   past_year = paste0("31/12/", as.character(year-1))
   next_year = paste0("01/01/", as.character(year+1))
-  sim_year = year - as.numeric(format(test_noPreasure$dateTime[1], "%Y")) #e.g. first year of simulation sim_year = 0
+  sim_year = year - as.numeric(format(sol_df$dateTime[1], "%Y")) #e.g. first year of simulation sim_year = 0
   sol_df_year = sol_df %>%
     filter(as.Date(sol_df$dateTime) > as.Date(past_year, format= "%d/%m/%Y" ) &
              as.Date(sol_df$dateTime) < as.Date(next_year, format= "%d/%m/%Y") ) %>%
@@ -87,8 +87,8 @@ plot_sizeSpectra = function(sol_df, year, title){
 
   for (q in 1:4) {
     # Indices for quarter (912 time steps per quarter)
-    init_idx <-  912 * (q - 1) + 1
-    final_idx <- 912 * q
+    init_idx <-  91.2 * (q - 1) + 1
+    final_idx <- 91.2 * q
     #prepare quarterly data:
     quarter_data <- sol_df_year[init_idx:final_idx, ]
 

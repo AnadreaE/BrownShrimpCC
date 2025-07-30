@@ -95,3 +95,46 @@ plot(t, Bcod(t))
 Imax = 10
 plot(log(shrimp_lRange) -  l_opt_cod_avg, ingestion_kernel(I_max = Imax, shrimp_lRange), main = paste("Imax=", Imax),
      xlab= 'l - l_opt', ylab = 'clearance efficiency')
+
+
+#######PREDATIO WITH: #############
+#spatio-temporal distribution of biomass specific mortality
+
+#mu_shrimp = mu_ref * f_t * sigma * (gamma*B_s + beta*n(J) )
+#mu_ref: reference value = 0.025 day-1
+#f_t: Q10 temperature coefficient
+#sigma: function that depends on depth and salinity.-> will be a constant
+#gamma*B_s: shrimp concentration
+#beta*n(J): oscilation component for seasonality.
+
+eta_J <- function(t_day) {
+  cos_term <- cos(2 * pi * (t_day - 150) / 365)
+  eta <- 0.5 + 0.5*cos_term  # gives values from 0 to 2
+  return(eta^2)         # seasonal amplification
+}
+
+ST_predation = function(t_day, Te, B_s){
+  mu_ref = 0.025 #day^-1 #same as mesozooplankton paper
+  f_t = 2
+  sigma = 0.5
+  eta = eta_J(t_day)
+  beta = 18 # mesozooplankton paper = 18
+  gamma = 3.7469 #m2 (Kg d)^-1 #original 0.1 m2 (molC d)^-1
+  return(mu_ref*f_t*sigma*(gamma*B_s + beta*eta ))
+}
+
+#test
+days_3years = seq(1, 365*3)
+
+B_s = 2 + cos(2 * pi * (days_3years - 250) / 365)
+
+plot(days_3years, B_s)
+
+predatio_preasure = ST_predation(days_3years, 10, B_s)
+plot(days_3years, predatio_preasure)
+
+
+#See how new_predation function look like:
+plot(days_3years, new_Bpredator(days_3years), main = 'see preador funciton')
+
+

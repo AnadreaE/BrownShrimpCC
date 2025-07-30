@@ -19,7 +19,7 @@ library(profvis)
 
 temperature_dataSet <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
 temperature_14_18 <- temperature_func(temperature_dataSet, "01/01/2014", "31/12/2018")
-t_5years = seq(0,length(temperature_14_18$temperature)-0.1, by = 0.1)
+t_5years = seq(0,length(temperature_14_18$temperature)-0.1)
 
 
 state_r = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
@@ -218,7 +218,7 @@ end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == 2015], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
-     lwd = 3, col = 'grey', lty=1, ylim = c(50,1000), xlim = c(2.5, 4.35) )
+     lwd = 3, col = 'grey', lty=1, ylim = c(50,1000), xlim = c(2.5, 5) )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == 2015], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
 points(weekly_avg_pred$avg_L[weekly_avg_pred$year == 2015], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
 points(weekly_avg_both$avg_L[weekly_avg_both$year == 2015], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
@@ -279,6 +279,259 @@ points(weekly_avg_both$avg_L[weekly_avg_both$year == year_to_plot], weekly_avg_b
 legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
        fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
 
+
+
+############ TEST V5 #################
+
+state_st = c(P = 2, E = 0.1, L= 0.0928 *1.5 ,
+            BF = BF+0.1, BM = BM+0.1)
+
+
+#### TEST (1 out of 4) WITHOUT ANY KIND OF PREASURE (P NEITHER F) ####
+
+start <- Sys.time()
+test_noPreasure_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, parameters = noPreasure_params, temperature_dataSet = temperature_14_18)
+print(Sys.time() - start)
+
+#Plot size spectra
+plot_sizeSpectra(test_noPreasure_stPred, 2015, title = "NP")
+
+#### TEST (2 out of 4) ONLY PREDATION ####
+
+pred_params = parameters_solv
+pred_params$general_params$Fi = 0 #No fishery
+
+
+start <- Sys.time()
+test_predation_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, parameters = pred_params, temperature_dataSet = temperature_14_18)
+print(Sys.time() - start)
+
+#Plot size spectra
+plot_sizeSpectra(test_predation_stPred, 2015, title = "Pred")
+
+#### TEST (3 out of 4) ONLY FISHERY ####
+
+fishery_params = parameters_solv
+fishery_params$general_params$Imax_ik = 0 #No predation
+fishery_params$general_params$Fi = 0.025 #reduced fishery
+
+start <- Sys.time()
+test_fishery_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, parameters = fishery_params, temperature_dataSet = temperature_14_18)
+print(Sys.time() - start)
+
+#Plot size spectra
+plot_sizeSpectra(test_fishery_stPred, 2015, title = "Fi")
+
+#### TEST (4 out of 4) PREDATION AND FISHERY####
+
+bothPF_params = parameters_solv
+bothPF_params$general_params$Fi = 0.025 #reduced fishery
+
+start <- Sys.time()
+test_bothFP_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
+print(Sys.time() - start)
+
+#Plot size spectra
+plot_sizeSpectra(test_bothFP_stPred, 2015, title = "F&P")
+
+#stacked area plot
+
+test_bothFP_red <- test_bothFP_stPred[ , c(3:18)] # delete timesteps column, plancton  and predator column
+
+#cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
+test_pred_long <- test_bothFP_red %>%
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+
+ggplot(test_pred_long, aes(x = dateTime, y = value, fill = variable)) +
+  geom_area() +
+  scale_fill_viridis_d() +
+  labs(
+    title = "System incl. predation ",
+    x = "Date",
+    y = "Biomass",
+    fill = "Size class"
+  )
+
+
+#### PLOTS TO COMPARE ALL ####
+
+#(1) L_avg over the time:
+size_classes = female_cols <- paste0("BL", 1:8)
+
+#calculate weighted average for each time step:
+
+#first join F and M in one column
+#Without preasure (1)
+noPreasure_noSex_stPred = test_noPreasure_stPred %>%
+  mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
+  mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
+  select(19:23, 10:12,24, 18 ) %>% #select only the colums unisex
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+
+L_avg_noPreasure_stPred = noPreasure_noSex_stPred %>%
+  mutate(L_avg = ( L1*size_mean_F[1] + L2*size_mean_F[2]+ L3*size_mean_F[3]+ L4*size_mean_F[4] + L5*size_mean_F[5]
+                   + BF6*size_mean_F[6] + BF7*size_mean_F[7]+ BF8*size_mean_F[8])/ttlB )
+
+#Only Predation (2)
+predation_noSex_stPred = test_predation_stPred %>%
+  mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
+  mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
+  select(19:23, 10:12,24, 18) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+Lavg_pred_stPred = predation_noSex_stPred %>%
+  mutate(L_avg = ( L1*size_mean_F[1] + L2*size_mean_F[2]+ L3*size_mean_F[3]+ L4*size_mean_F[4] + L5*size_mean_F[5]
+                   + BF6*size_mean_F[6] + BF7*size_mean_F[7]+ BF8*size_mean_F[8])/ttlB )
+
+#Only Fishery (3)
+fishery_noSex_stPred = test_fishery_stPred %>%
+  mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
+  mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
+  select(19:23, 10:12,24, 18) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+Lavg_fishery_stPred = fishery_noSex_stPred %>%
+  mutate(L_avg = ( L1*size_mean_F[1] + L2*size_mean_F[2]+ L3*size_mean_F[3]+ L4*size_mean_F[4] + L5*size_mean_F[5]
+                   + BF6*size_mean_F[6] + BF7*size_mean_F[7]+ BF8*size_mean_F[8])/ttlB )
+
+#Both predation & fishery (4)
+bothPF_noSex_stPred = test_bothFP_stPred %>%
+  mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
+  mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
+  select(19:23, 10:12,24, 18 ) %>% #Column 24 HAS TO EB CHANGED WHEN RUNNING NEW SIM TO SELECT DATETIME
+  filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" )) #delete first year 'warm up' period
+
+Lavg_bothPF_stPred = bothPF_noSex_stPred %>%
+  mutate(L_avg = ( L1*size_mean_F[1] + L2*size_mean_F[2]+ L3*size_mean_F[3]+ L4*size_mean_F[4] + L5*size_mean_F[5]
+                   + BF6*size_mean_F[6] + BF7*size_mean_F[7]+ BF8*size_mean_F[8])/ttlB )
+dev.off()
+
+plot(noPreasure_noSex_stPred$dateTime, L_avg_noPreasure_stPred$L_avg, las = 1,  col = 'grey', cex = 0.8,
+     xlab = 'years', ylab = paste(TeX("$l$"), '[cm]'), ylim = c(1, 5) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
+     main = 'Changes in average size ')
+lines(Lavg_pred_stPred$dateTime, Lavg_pred_stPred$L_avg, col = 'indianred3', lty=1, lwd = 2.5)
+lines(Lavg_fishery_stPred$dateTime, Lavg_fishery_stPred$L_avg, col = 'skyblue4', lty=1, lwd = 2.5)
+lines(Lavg_bothPF_stPred$dateTime, Lavg_bothPF_stPred$L_avg, col = 'hotpink', lty=1, lwd = 2.5)
+
+legend("topright", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.65)
+
+
+
+plot(noPreasure_noSex_stPred$dateTime, L_avg_noPreasure_stPred$ttlB, las = 1,  col = 'grey', cex = 0.8,
+     xlab = 'years', ylab = 'biomass [?]', type = 'l', lty = 2, lwd = 3,
+     main = 'Changes in biomass ', ylim = c(0, 600) )
+lines(Lavg_pred_stPred$dateTime, Lavg_pred_stPred$ttlB, col = 'indianred3', lty=1, lwd = 2.5)
+lines(Lavg_fishery_stPred$dateTime, Lavg_fishery_stPred$ttlB, col = 'skyblue4', lty=1, lwd = 2.5)
+lines(Lavg_bothPF_stPred$dateTime, Lavg_bothPF_stPred$ttlB, col = 'hotpink', lty=1, lwd = 2.5)
+
+legend("topright", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.6)
+
+
+#### now plot L_avg vs Biomass ####
+
+#Now group by the week number and calculate avg of the size
+
+weekly_avg_noPreasure_stPred  <- L_avg_noPreasure_stPred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_fish_stPred  <- Lavg_fishery_stPred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_pred_stPred  <- Lavg_pred_stPred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_both_stPred  <- Lavg_bothPF_stPred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
+
+
+
+plot(weekly_avg_noPreasure_stPred$avg_L[weekly_avg_noPreasure_stPred$year == 2015], weekly_avg_noPreasure_stPred$avg_B[weekly_avg_noPreasure_stPred$year == 2015],
+     lwd = 3, col = 'grey', lty=1, ylim = c(50,1000), xlim = c(2.5, 5) )
+points(weekly_avg_fish_stPred$avg_L[weekly_avg_fish_stPred$year == 2015], weekly_avg_fish_stPred$avg_B[weekly_avg_fish_stPred$year == 2015], lwd = 2, col ='skyblue4' )
+points(weekly_avg_pred_stPred$avg_L[weekly_avg_pred_stPred$year == 2015], weekly_avg_pred_stPred$avg_B[weekly_avg_pred_stPred$year == 2015], lwd = 2, col ='indianred3' )
+points(weekly_avg_both_stPred$avg_L[weekly_avg_both_stPred$year == 2015], weekly_avg_both_stPred$avg_B[weekly_avg_pred_stPred$year == 2015], lwd = 2, col= 'hotpink' )
+
+legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
+
+
+#### now plot L_avg vs Biomass ####
+
+#Now group by the week number and calculate avg of the size
+
+weekly_avg_noPreasure  <- L_avg_noPreasure %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_fish  <- Lavg_fishery %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_pred  <- Lavg_pred %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+weekly_avg_both  <- Lavg_bothPF %>%
+  mutate(
+    year = year(dateTime),
+    week = isoweek(dateTime)  # or week(dateTime), depending on your preference
+  ) %>%
+  group_by(year, week) %>%
+  summarise(avg_L = mean(L_avg, na.rm = TRUE), avg_B = mean(ttlB, na.rm = TRUE), .groups = "drop")
+
+init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
+end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
+
+
+par(mfrow = c(1,1))
+year_to_plot = 2015
+plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == year_to_plot], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == 2015],
+     lwd = 3, col = 'grey', lty=1, ylim = c(50,500), xlim = c(2.5, 5),
+     xlab = "L", ylab = "Biomass", main = paste(" ", as.character(fishery_params$general_params$Fi)) )
+points(weekly_avg_fish$avg_L[weekly_avg_fish$year == year_to_plot], weekly_avg_fish$avg_B[weekly_avg_fish$year == 2015], lwd = 2, col ='skyblue4' )
+points(weekly_avg_pred$avg_L[weekly_avg_pred$year == year_to_plot], weekly_avg_pred$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col ='indianred3' )
+points(weekly_avg_both$avg_L[weekly_avg_both$year == year_to_plot], weekly_avg_both$avg_B[weekly_avg_pred$year == 2015], lwd = 2, col= 'hotpink' )
+
+legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
+       fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
 
 
 
