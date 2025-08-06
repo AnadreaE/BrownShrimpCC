@@ -87,6 +87,7 @@ monthly_Feffort = c(0.19, 0.2, 0.86, 1.6, 1.39, 1.26, 1.19, 1.25, 1.27, 1.26, 1.
 
 
 
+
 ##### FUNCTIONS #####
 
 
@@ -960,8 +961,6 @@ solver_sizeClass.v4 = function(t, state, parameters, temperature_dataSet){
 }
 
 
-
-
 solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
   system.equations = function(t, state, parameters) {
     #following line avoid negative values in state variables
@@ -998,10 +997,12 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
     produced_eggs = 0
 
     promoting_f = 0.5*promoting_L
-    promoting_sizeClass = 0
+    #promoting_sizeClass = 0
     mol_i = 0
 
     mortality_eggs = 0
+
+    fishery_catch = 0
 
     #Juvenile or adult shrimp F
     for(i in 1:N_max_F){
@@ -1013,16 +1014,18 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       mol_i = molting_fraction(size_mean_F[i], Te)
       fm_i = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(size_mean_F[i]) #fishing mortality
       Pred = ST_predation(t, Te, BF[i])
-      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.35, l_pred = 2.75, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_F) aging_i = parameters$general_params$a_mu
 
-      dBF.dt[i] = promoting_f + promoting_sizeClass + BF[i]*(I_i_f- m_i - mol_i*(1/convertL_to_W(i))*s_i - g_i - fm_i - pL_i - aging_i) #old spawning: mol_i*(1/convertL_to_W(i))*s_i
-      promoting_sizeClass = g_i*BF[i]
-      produced_eggs = produced_eggs + s_i*mol_i*BF[i]/convertL_to_W(i)
+      dBF.dt[i] = promoting_f + BF[i]*(I_i_f- m_i - mol_i*(1/convertL_to_W(size_mean_F[i]))*s_i - g_i - fm_i - pL_i - aging_i) #old spawning: mol_i*(1/convertL_to_W(i))*s_i
+      #promoting_sizeClass = g_i*BF[i]
+      produced_eggs = produced_eggs + s_i*mol_i*BF[i]/convertL_to_W(size_mean_F[i])
       mortality_eggs = s_i*mol_i*( BF[i]*fm_i + BF[i]*pL_i)
       consumed_plankton = consumed_plankton + I_i_f*BF[i]
-      promoting_f = 0
+      promoting_f = g_i*BF[i]
+
+      fishery_catch = fishery_catch + fm_i*BF[i]
     }
 
     promoting = 0.5*promoting_L
@@ -1034,13 +1037,15 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
       fm_i = parameters$general_params$Fi*monthly_Feffort[month]*sel_probit(size_mean_M[i]) #fishing mortality
       Pred = ST_predation(t, Te, BM[i])
-      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.35, l_pred = 2.75, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_M) aging_i = parameters$general_params$a_mu
 
       dBM.dt[i] = promoting + BM[i]*(I_i- m_i - g_i - fm_i - pL_i - aging_i)
       promoting = g_i*BM[i]
       consumed_plankton = consumed_plankton + I_i*BM[i]
+
+      fishery_catch = fishery_catch + fm_i*BM[i]
 
     }
 
@@ -1052,7 +1057,7 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
     dP.dt = new_food(t) - consumed_plankton
 
     return(list(c(dP.dt, dE.dt, dL.dt,
-                  dBF.dt, dBM.dt)))
+                  dBF.dt, dBM.dt) , catch = fishery_catch))
 
   }
 

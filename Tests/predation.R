@@ -2,6 +2,7 @@ library(latex2exp)
 
 #Here Predation function will be determined
 
+#Optimal length of prey for a predator of size l_pred
 lopt = function(l_pred){
   l = log(l_pred)
   r=-1.65
@@ -18,7 +19,7 @@ ingestion_kernel = function(I_max, l_pred, l_prey){
 
 cod_lRange = seq(0.5, 120, 0.1) #[cm]
 cod_larvRange = seq(2.5, 3, 0.01) #[cm]
-shrimp_lRange = seq(0.155, 8.5, 0.0071) #(8.5-0.15)/1176 steps to meet same length as cod L range
+shrimp_lRange = seq(0.155, 8.5, 0.006981605) #(8.5-0.15)/1176 steps to meet same length as cod L range
 
 
 #dev.off()
@@ -50,7 +51,7 @@ summary(fit)
 dev.off()
 
 Imax = 1
-plot(shrimp_lRange, ingestion_kernel(I_max = Imax, cod_lRange[20],shrimp_lRange), main = paste("Imax=", Imax),
+plot(shrimp_lRange, ingestion_kernel(I_max = Imax, 8.75,shrimp_lRange), main = paste("Imax=", Imax), #l_pred =cod_lRange[20]
      xlab= 'Shrimp size range [cm]', ylab = 'ingestion kernel')#, xlim= c(0,20))
 
 
