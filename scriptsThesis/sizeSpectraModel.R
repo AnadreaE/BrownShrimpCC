@@ -313,7 +313,7 @@ test_predation_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, par
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_predation_stPred, 2015, title = "Pred")
+plot_sizeSpectra(test_predation_stPred, 2018, title = "Pred")
 
 #### TEST V5 (3 out of 4) ONLY FISHERY ####
 
@@ -338,11 +338,11 @@ test_bothFP_stPred <- solver_sizeClass.v5(t = t_5years, state = state_st, parame
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_bothFP_stPred, 2015, title = "F&P")
+plot_sizeSpectra(test_bothFP_stPred, 201, title = "F&P")
 
 #stacked area plot
 
-test_pred.V5_red <- test_predation_stPred[ , c(3:18)] # delete timesteps column, plancton  and predator column
+test_pred.V5_red <- test_predation_stPred[ , c(3:19)] # delete timesteps column, plancton  and predator column
 
 #cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
 test_pred_long <- test_pred.V5_red %>%
@@ -403,6 +403,8 @@ mat <- rbind("f" = f_vals, "m" = m_vals)
 total_biomass <- sum(mat)
 mat_prop <- mat / total_biomass
 
+par(mfrow = c(1,1))
+
 # Plot barplot V4 (background because B is higher)
 bar_x = barplot(
   #mat,
@@ -447,11 +449,11 @@ polygon(c(bar_x, rev(bar_x)),
 axis(side = 4)
 
 #### @Thesis, Methodology Biomass estimation for initial conditions ####
-#Calculate distribution of 7.59 kg / km2 :
+#Calculate distribution of 14.71  kg / km2 ... OLD:7.59 kg / km2 :
 
 size_classes_proportions = colSums(mat_prop)
 
-size_dist_biomass = 7.59*size_classes_proportions
+size_dist_biomass = 14.71*size_classes_proportions
 
 est_biomass_dist = 100*size_dist_biomass/5 #considering that fishery is 5% of actual stock
 

@@ -111,8 +111,9 @@ respiration_rate = function(temperature,L){
 #' @export
 #'
 #' @examples
-new_food = function(t) {
-  toReturn = 2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) #reduced to test 24.07. from 0.2 to 1.5
+new_food = function(t, Te, scale = 2) {
+  Q10 = 1.6**((Te-10)/10)
+  toReturn = scale*Q10  * (2.2 + cos( (2*pi/ 365)*(t-172) ) )^2 #reduced to test 24.07. from 0.2 to 1.5
  # print(paste("new_food sucsessful",  0.2 * (1.2 + cos( (2*pi/ 365)*(t-172) ) ) ))
   #( 1 + cos( (2*pi/(365/0.1) ) *(t-(100/0.1) ) )) # 2 + cos(2 * pi * t / 365
   return(toReturn)
