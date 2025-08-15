@@ -29,9 +29,9 @@ t_5years = seq(0,length(temperature_14_18$temperature)-0.1)
 #IC_parameterized = c(P = 2, E = 0.759, L= 0.38  ,
  #            BF = BF_p, BM = BM_p) #Initial conditions according to estimations with fishery landings data.
 
-BF_p = c(3.801852,  7.063263,  12.657331, 25.166351, 49.297133, 45.876772, 34.672340,  19.396426) #see calculation in file 'sizeSpectraMoldel.R'
-BM_p = c(4.573332  , 8.203546 , 13.791605 , 26.328928 , 43.371121  ) #see calculation in file 'sizeSpectraMoldel.R'
-IC_parameterized.v2 = c(P = 2, E = 0.759, L= 0.38  ,
+BF_p = c(3.801852,  7.063263,  12.657331, 25.166351, 49.297133, 45.876772, 34.672340,  19.396426)#*1e-6 #see calculation in file 'sizeSpectraMoldel.R'
+BM_p = c(4.573332  , 8.203546 , 13.791605 , 26.328928 , 43.371121  )#*1e-6 #see calculation in file 'sizeSpectraMoldel.R'
+IC_parameterized.v2 = c(P = 2, E = 2, L= 1 ,
                         BF = BF_p, BM = BM_p) #Initial conditions with reduced area (only up to 20 m depth).
 
 
@@ -90,7 +90,7 @@ plot_sizeSpectra(test_bothFP, 2018, title = "F&P")
 
 #Plot fishery catch (for only one year):
 #define one year to be inspected
-year_toSee = 2018
+year_toSee = 2015
 #subset data and sum up to monthly values:
 sol_yearToSee = test_bothFP %>%
                filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%
@@ -253,9 +253,9 @@ init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
 end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
-plot_year = 2017
+plot_year = 2016
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == plot_year], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == plot_year],
-     lwd = 3, col = 'grey', lty=1, ylim = c(20,500), xlim = c(3.25, 5.2) ,
+     lwd = 3, col = 'grey', lty=1, ylim = c(5,400), xlim = c(2.5, 5.2) ,
      xlab = 'L in cm', ylab = TeX(" biomass Kg $Km^{-2}$"), main = paste('Fi baseline ', bothPF_params$general_params$Fi, '\n ', plot_year))
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year], lwd = 2, col ='skyblue4' )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year][1], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year][1], lwd = 2, col ='skyblue', cex = 1.5, pch = 8 )

@@ -133,7 +133,7 @@ lines(ble_data$month[ble_data$year == year_toSee], ble_data$t[ble_data$year == y
 
 
 #Look now on 2017:
-year_toSee = 2017
+year_toSee = 2018
 #subset data and sum up to monthly values:
 sol_2017 = test_bothFP %>%
   filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%

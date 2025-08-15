@@ -4,6 +4,8 @@
 ## Source: Andrea F.                          ##
 ################################################
 
+library(dplyr)
+
 ##### constant parameter values: #####
 
 the.method = 'rk4'
@@ -136,12 +138,12 @@ K_func_briere = function(temperature, sex_params){
 #'
 #' @param w [g]
 #'
-#' @returns alpha value [gr C (prey) m-2] , m2 considering 10 cm water depth as
+#' @returns alpha value [gr (prey) m-2] , m2 considering 10 cm water depth as
 #' @export
 #'
 #' @examples alpha_igr(2)
 alpha_igr = function(w){
-  return(0.064327*w^(0.23))
+  return(0.1429*w^(0.23))#.064327
 }
 
 
@@ -361,7 +363,7 @@ ST_predation = function(t_day, Te, B_s){
   sigma = 0.8#0.5
   eta = eta_J(t_day)
   beta = 18 # mesozooplankton paper = 18
-  gamma = 3.7469 #m2 (Kg d)^-1 #original 0.1 m2 (molC d)^-1
+  gamma = 3.7469 *1e-6 #Km2 (Kg d)^-1 #original 0.1 m3 (molC d)^-1
   return(mu_ref*f_t*sigma*(gamma*B_s + beta*eta ))
 }
 
