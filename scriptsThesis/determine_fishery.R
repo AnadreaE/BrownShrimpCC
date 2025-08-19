@@ -88,86 +88,30 @@ print(Sys.time() - start)
 #Plot size spectra
 plot_sizeSpectra(test_bothFP, 2015, title = "F&P")
 
+#Plot fishery catch for following years:
 
+years_to_see = c(2015, 2016, 2018)
 
+par(mfrow = c(1,length(years_to_see)))
+for (i in years_to_see){
+  sol_yearToSee = test_bothFP %>%
+    filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == i) %>%
+    mutate(month = month(dateTime)) %>%
+    group_by(month) %>%
+    summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
 
-par(mfrow = c(1,3))
-#Plot fishery catch (for only one year):
-#define one year to be inspected
-year_toSee = 2015
-#subset data and sum up to monthly values:
-sol_yearToSee = test_bothFP %>%
-  filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%
-  mutate(month = month(dateTime)) %>%
-  group_by(month) %>%
-  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+  #Calculate the total landings per month (considering 50% discard):
 
-#par(mfrow = c(1,1))
-#plot(sol_yearToSee$month, sol_yearToSee$catch.BF1,  type = 'b', main = 'Fished Kg per Km2 per month')
+  monthly_landing_2015 = sol_yearToSee$catch.BF1 * 7587.1 / 1000 /2 #ttl area = 7587.1 ; convert Kg to t /1000; /2 50%bycatch
+  plot(sol_yearToSee$month, monthly_landing_2015,  type = 'b',
+       main = paste('Monthly landings Germany', i), ylim = c(0,2250), col = '#c994c7', lwd = 2)
+  lines(ble_data$month[ble_data$year == i], ble_data$t[ble_data$year == i], col = 'gray42',  lwd = 2)
 
-#Calculate the total landings per month (considering 50% discard):
-
-monthly_landing_2015 = sol_yearToSee$catch.BF1 * 14701.5 / 1000 #ttl area = 14701,5 ; convert Kg to t /1000
-plot(sol_yearToSee$month, monthly_landing_2015,  type = 'b',
-     main = 'Monthly landings Germany 2015', ylim = c(0,1800), col = '#c994c7', lwd = 2)
-lines(ble_data$month[ble_data$year == 2015], ble_data$t[ble_data$year == 2015], col = 'gray42',  lwd = 2)
-
-#Look now on 2016:
-year_toSee = 2016
-#subset data and sum up to monthly values:
-sol_2016 = test_bothFP %>%
-  filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%
-  mutate(month = month(dateTime)) %>%
-  group_by(month) %>%
-  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
-
-#par(mfrow = c(1,1))
-#plot(sol_2016$month, sol_2016$catch.BF1,  type = 'b', main = 'Fished Kg per Km2 per month')
-
-#Calculate the total landings per month (considering 50% discard):
-
-monthly_landing_2016 = sol_2016$catch.BF1 * 14701.5 / 1000 #ttl area = 14701,5 ; convert Kg to t /1000
-plot(sol_2016$month, monthly_landing_2016,  type = 'b',
-     main = paste('Monthly landings Germany', year_toSee ), ylim = c(0,1800), col = '#c994c7', lwd = 2)
-lines(ble_data$month[ble_data$year == year_toSee], ble_data$t[ble_data$year == year_toSee], col = 'gray42', lty = 2, lwd = 2)
-
-
-#Look now on 2017:
-year_toSee = 2018
-#subset data and sum up to monthly values:
-sol_2017 = test_bothFP %>%
-  filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%
-  mutate(month = month(dateTime)) %>%
-  group_by(month) %>%
-  summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
-
-#par(mfrow = c(1,1))
-#plot(sol_2016$month, sol_2016$catch.BF1,  type = 'b', main = 'Fished Kg per Km2 per month')
-
-#Calculate the total landings per month (considering 50% discard):
-
-monthly_landing_2017 = sol_2017$catch.BF1 * 14701.5 / 1000 #ttl area = 14701,5 ; convert Kg to t /1000
-plot(sol_2017$month, monthly_landing_2017,  type = 'b',
-     main = paste('Monthly landings Germany', year_toSee ), ylim = c(0,1800), col = '#c994c7', lwd = 2)
-lines(ble_data$month[ble_data$year == year_toSee], ble_data$t[ble_data$year == year_toSee], col = 'gray42', lwd = 2, type = 'o') #, lty = 2
-
+}
 
 #Look at plankton
 par(mfrow = c(1,1))
-plot(test_bothFP$time, test_bothFP$P, type = 'l', xlim = c(0,365))
+plot(test_bothFP$time, test_bothFP$P, type = 'l', xlim = c(0,365), ylim = c(0,100))
 
 
 
-
-## Data effort and LPUE from 2010 to 2022
-
-LPUE = c(3.2,4.3, 3, 3.1, 3, 2.7, 1.3, 1.7, 3.7, 2.2, 2.1, 1.7, 2.2)
-effort =  c(10200, 7000, 12000, 12200, 12000, 12000, 14000, 11800, 11600, 9500, 9800, 10200, 9500)
-
-LPUE_mean = mean(LPUE)
-LPUE_sd = sd(LPUE)
-
-effort_mean = mean(effort)
-effort_sd = sd(effort)
-
-z_LPUE = (LPUE - LPUE_mean)/LPUE_sd

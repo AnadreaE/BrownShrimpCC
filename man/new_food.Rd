@@ -4,7 +4,7 @@
 \alias{new_food}
 \title{Production of resources (Plancton) - TEMPORARILY ARTIFICIAL FUNCTION WITH COSINUS; TO BE REPLACED BY A MORE REALISTIC ONE}
 \usage{
-new_food(t)
+new_food(t, Te, scale = 2)
 }
 \arguments{
 \item{t}{time}

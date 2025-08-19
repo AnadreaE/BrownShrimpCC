@@ -1,4 +1,3 @@
-
 library(ggplot2)
 library(deSolve)
 library(RColorBrewer)
@@ -7,7 +6,7 @@ library(viridis)
 library(dplyr)
 library(tidyr)
 library("colorspace")
-library(lubridate)
+#library(lubridate)
 library(latex2exp)
 library(profvis)
 
@@ -16,11 +15,11 @@ library(profvis)
 #UPLOAD TEMPERATURE DATA
 
 temperature_dataSet <- read.csv("./data/Temperature_data_1982-2018_MarBiol.csv", header = TRUE, sep = ';')
-temperature_14_18 <- temperature_func(temperature_dataSet, "01/01/2014", "31/12/2018")
+temperature_14_18 <- temperature_func(temperature_dataSet, "01/01/2013", "31/12/2018")
 
 ble_data = read.csv("./data/BLE_Inlandslandungen_SpeiseKrabbe.csv", sep = ';')
 
-t_5years = seq(0,length(temperature_14_18$temperature)-0.1)
+t_5years = seq(0,length(temperature_14_18$temperature)-.1)
 
 #BF_p = c(1.1476,  2.739,  5.604, 11.65, 21.524, 17.976, 11.613,  5.346) #see calculation in file 'sizeSpectraMoldel.R'
 #BM_p = c(1.464, 3.645, 8.855, 22.622, 37.614) #see calculation in file 'sizeSpectraMoldel.R'
@@ -47,7 +46,7 @@ test_noPreasure <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_noPreasure, 2017, title = "NP")
+plot_sizeSpectra(test_noPreasure, 2013, title = "NP")
 
 
 #### TEST V5 (2 out of 4) ONLY PREDATION ####
@@ -79,46 +78,59 @@ plot_sizeSpectra(test_fishery, 2015, title = "Fi")
 #### TEST V5 (4 out of 4) PREDATION AND FISHERY####
 
 bothPF_params = parameters_solv
-bothPF_params$general_params$Fi = 0.05 #reduced fishery
+bothPF_params$general_params$Fi = 0.035 #reduced fishery
 
 start <- Sys.time()
 test_bothFP <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_bothFP, 2018, title = "F&P")
+plot_sizeSpectra(test_bothFP, 2015, title = "F&P")
 
-#Plot fishery catch (for only one year):
-#define one year to be inspected
-year_toSee = 2015
-#subset data and sum up to monthly values:
-sol_yearToSee = test_bothFP %>%
-               filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == year_toSee) %>%
-              mutate(month = month(dateTime)) %>%
-              group_by(month) %>%
-              summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+#Plot fishery catch:
+#define years to be inspected
+years_to_see = c(2015, 2016, 2018)
+
+par(mfrow = c(1,length(years_to_see)))
+for (i in years_to_see){
+  sol_yearToSee = test_bothFP %>%
+    filter(as.numeric(format(test_bothFP$dateTime,'%Y')) == i) %>%
+    mutate(month = month(dateTime)) %>%
+    group_by(month) %>%
+    summarise(across(where(is.numeric), \(x) sum(x, na.rm = TRUE)))
+
+  #Calculate the total landings per month (considering 50% discard):
+
+  #monthly_landing_2015 = sol_yearToSee$catch.BF1 * 7587.1 / 1000 /2 #ttl area = 7587.1 ; convert Kg to t /1000; /2 50%bycatch
+  #monthly_landing_2015_2 = sol_yearToSee$catch.BF1 * 7587.1 / 1000 /1.05 #ttl area = 7587.1 ; convert Kg to t /1000; /2 50%bycatch
+  plot(ble_data$month[ble_data$year == i], ble_data$t[ble_data$year == i], col = 'gray42',  lwd = 2,  type = 'b',
+       main = paste('Monthly landings Germany', i), ylim = c(0,2250))
+  lines(sol_yearToSee$month, sol_yearToSee$catch_undersized.BF1*7587.1/1000*0.5 + sol_yearToSee$catch_commercial.BF1, lwd = 2, col = '#c994c7')
+  lines(sol_yearToSee$month, sol_yearToSee$catch_undersized.BF1*7587.1/1000*0.95 + sol_yearToSee$catch_commercial.BF1, col = 'green' )
+}
 
 
-par(mfrow = c(1,1))
-#plot(sol_yearToSee$month, sol_yearToSee$catch.BF1,  type = 'b', main = 'Fished Kg per Km2')
-#lines(1:length(monthly_Feffort), monthly_Feffort, col = 'red')
-
-#calculate ttl landings in Germany
-monthly_landing_year = sol_yearToSee$catch.BF1 * 7587.1 / 1000 # ttl area = 7587.1; convert Kg to t /1000; ttl area = 14701,5 (incl. till 30m)
-plot(sol_yearToSee$month, monthly_landing_year,  type = 'b',  ylim = c(0,1800),
-     main = paste('Monthly landings Germany', year_toSee), col = '#c994c7', lwd = 2)
-lines(ble_data$month[ble_data$year == year_toSee], ble_data$t[ble_data$year == year_toSee], col = 'gray42', lty = 2, lwd = 2)
-
-
-
-#stacked area plot
+#STACKED AREA PLOT
 
 #test_pred.V5_red <- test_predation[ , c(3:18)] # delete timesteps column, plancton  and predator column
-test_both.V5_red <- test_bothFP[ , c(3:17, 19)] # delete timesteps column, plancton  and predator column
+test_both.V5_red <- test_bothFP[ , c(3:17, 20)] # delete timesteps column, plancton  and predator column
+
+test_both.V5_red = test_both.V5_red %>%
+      mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
+      #mutate(ttlB = L1 + L2+ L3+ L4+ L5+ BF6+ BF7 + BF8) %>%
+      select(1,2, 17:21, 8:10, 16)
+      #filter(as.Date(dateTime) > as.Date("31/12/2014", format= "%d/%m/%Y" ))  #delete first year 'warm up' period
+
+
+new_colnames = c("0E", "L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8", "dateTime")
+
+colnames(test_both.V5_red) = new_colnames
 
 #cc_long_2 <- gather(cc_2, key = "Type", value = "Value", P, E, L, J, J2, J3, J4, J5, A1, A2)
 test_both_long <- test_both.V5_red %>%
-  pivot_longer(-dateTime, names_to = "variable", values_to = "value")
+  pivot_longer(-dateTime, names_to = "variable", values_to = "value") %>%
+  #filter(dateTime > as.Date("31/12/2013", format = "%d/%m/%Y") &  dateTime < as.Date("31/12/2019", format = "%d/%m/%Y"))  %>%#don't consider first year Spin-up period
+  mutate(variable = factor(variable, levels = rev(c("0E", "L0", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"))))
 
 ggplot(test_both_long, aes(x = dateTime, y = value, fill = variable)) +
   geom_area() +
@@ -134,7 +146,7 @@ ggplot(test_both_long, aes(x = dateTime, y = value, fill = variable)) +
 
 #Look at plankton
 par(mfrow = c(1,1))
-plot(test_bothFP$time, test_bothFP$P, type = 'l', xlim = c(0,365), ylim = c(0,30) )
+plot(test_bothFP$time, test_bothFP$P, type = 'l', xlim = c(0,365*3), ylim = c(0,500) )
 
 #### PLOTS TO COMPARE ALL ####
 
@@ -189,9 +201,9 @@ Lavg_bothPF = bothPF_noSex %>%
   mutate(L_avg = ( L1*size_mean_F[1] + L2*size_mean_F[2]+ L3*size_mean_F[3]+ L4*size_mean_F[4] + L5*size_mean_F[5]
                    + BF6*size_mean_F[6] + BF7*size_mean_F[7]+ BF8*size_mean_F[8])/ttlB )
 #dev.off()
-
+par(mfrow = c(1,1))
 plot(noPreasure_noSex$dateTime, L_avg_noPreasure$L_avg, las = 1,  col = 'grey', cex = 0.8,
-     xlab = 'years', ylab = paste(TeX("$l$"), '[cm]'), ylim = c(2, 8) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
+     xlab = 'years', ylab = paste(TeX("$l$"), '[cm]'), ylim = c(2, 6.5) ,type = 'l', lty = 2, lwd = 3, #TeX(r"($\ell$)" )
      main = 'Changes in average size ')
 lines(Lavg_pred$dateTime, Lavg_pred$L_avg, col = 'indianred3', lty=1, lwd = 2.5)
 lines(Lavg_fishery$dateTime, Lavg_fishery$L_avg, col = 'skyblue4', lty=1, lwd = 2.5)
@@ -204,7 +216,7 @@ legend("topright", legend = c('no preasure', 'only predation', 'only fishery', '
 par(mar = c(5, 4, 4, 2) + 0.5)
 plot(noPreasure_noSex$dateTime, L_avg_noPreasure$ttlB, las = 1,  col = 'grey', cex = 0.8,
      xlab = 'years', ylab = TeX(" biomass Kg $Km^{-2}$"), type = 'l', lty = 2, lwd = 3,
-     main = 'Changes in biomass ', ylim = c(0, 900) )
+     main = 'Changes in biomass ', ylim = c(0, 1810) )
 lines(Lavg_pred$dateTime, Lavg_pred$ttlB, col = 'indianred3', lty=1, lwd = 2.5)
 lines(Lavg_fishery$dateTime, Lavg_fishery$ttlB, col = 'skyblue4', lty=1, lwd = 2.5)
 lines(Lavg_bothPF$dateTime, Lavg_bothPF$ttlB, col = 'hotpink', lty=1, lwd = 2.5)
@@ -253,9 +265,9 @@ init15 = as.POSIXct("2015-01-01", format="%Y-%m-%d", tz = "UTC")
 end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 
 
-plot_year = 2016
+plot_year = 2017
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == plot_year], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == plot_year],
-     lwd = 3, col = 'grey', lty=1, ylim = c(5,400), xlim = c(2.5, 5.2) ,
+     lwd = 3, col = 'grey', lty=1, ylim = c(5,1900), xlim = c(2.5, 5.2) ,
      xlab = 'L in cm', ylab = TeX(" biomass Kg $Km^{-2}$"), main = paste('Fi baseline ', bothPF_params$general_params$Fi, '\n ', plot_year))
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year], lwd = 2, col ='skyblue4' )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year][1], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year][1], lwd = 2, col ='skyblue', cex = 1.5, pch = 8 )
@@ -269,6 +281,17 @@ points(weekly_avg_both$avg_L[weekly_avg_both$year == plot_year][1], weekly_avg_b
 
 legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
        fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
+
+days = 1:365*3
+plot(days, new_food(days, 10))
+
+F_values <- seq(0, 500, by=10)
+alpha_val <- alpha_igr(convertL_to_W(1.1)) # example alpha
+plot(F_values, F_values/(F_values + alpha_val), type="l", main="Saturation curve", xlab="Food", ylab="Ingestion fraction")
+
+par(mfrow = c(1,1))
+plot(days, ST_predation(days, 10, 90, eta = eta_J(days, J = 90, power_of = 4 )))
+
 
 
 

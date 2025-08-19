@@ -13,7 +13,7 @@ alpha_igr(w)
 \item{w}{\link{g}}
 }
 \value{
-alpha value \link{gr C (prey) m-2} , m2 considering 10 cm water depth as
+alpha value \link{gr (prey) m-2} , m2 considering 10 cm water depth as
 }
 \description{
 Alpha param. used in ingestion rate function.
@@ -22,5 +22,7 @@ to work with area instead of volume.
 constants from kiorboe2014shifts
 }
 \examples{
+alpha_igr(convertL_to_W(5))
 alpha_igr(2)
+
 }
