@@ -910,13 +910,13 @@ lines(sizeClass_means[1:4], a_est_m * sizeClass_means_reduced_M^b_est_m, col = '
 #PLOTS FOR APPENDIX
 
 par(mfrow = c(1,2))
-plot((1:length(dev_time_juvIV))*0.1, dev_time_juvIV, main = "Development days Juvenile IV \n min_size = 3 cm and max_size = 4 cm",
-     las =1, xlab = 'T', ylab = 'development time [days]', col = 'gray41', cex.lab= 1.2 )
+plot((1:length(dev_time_juvIV))*0.1, dev_time_juvIV, main = "DevTime Juvenile IV \n min. size = 3 cm, max. size = 4 cm",
+     las =1, xlab = 'T [C°]', ylab = 'development time [days]', col = 'gray41', cex.lab= 1.2 )
 
-plot( (1:length(dev_time_juvIV))*0.1, 1/dev_time_juvIV, main = "1/DevTime Juvenile IV \n min_size = 3 cm and max_size = 4 cm" ,
-      las =1, xlab = 'T', ylab = 'Growt rate [1/days]', col = 'gray41', cex.lab= 1.2)
-lines(temperature_range, k_vals, col = 'red4', lwd = 2)
-legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c('gray41', "red4"))
+plot( (1:length(dev_time_juvIV))*0.1, 1/dev_time_juvIV, main = "1/DevTime Juvenile IV" ,
+      las =1, xlab = 'T [C°]', ylab = 'Growt rate [1/days]', col = 'gray41', cex.lab= 1.2)
+lines(temperature_range, k_vals_F, col = 'red4', lwd = 2)
+legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c('gray41', "red4"), cex = 1.1)
 
 
 

@@ -67,9 +67,9 @@ molting_fraction_old = function(L, Te, Fem_params){
 
 molting_fraction <- function(L, temperature){
   mf = 0
-  L=L*10
+  L=L*10 #*10 because Teming eq. is in mm
   if (L >= parameters_solv$general_params$L_mat*10){
-    if (temperature <= 0 ) {} #nothing happens, mf = 0
+    if (temperature <= 0.5 ) {} #nothing happens, mf = 0
     else if (temperature <= 16.2 && temperature > 0){ #T_opt fems= 16.2
       #mf =  (1 / (5.7066 * L^0.7364 * temperature ^(-0.09363) ) )/2  # exp(temperature*-0.09363) ) #/2 considering
       mf = (1 / (5.7066 * L^0.7364 * exp(temperature*-0.09363) ) ) #revision 28.05. Temming's implementation (above was Temming's formula on paper)
@@ -113,7 +113,7 @@ respiration_rate = function(temperature,L){
 #' @examples
 new_food = function(t, Te, scale = 2) {
   Q10 = 1.6**((Te-10)/10)
-  toReturn = scale*Q10  * (3 + cos( (2*pi/ 365)*(t-180) ) )#^2 #102 spring #2.2
+  toReturn = scale*Q10* (3.3 + cos( (2*pi/ 365)*(t-240) ) )#^2 #102 spring #2.2
   return(toReturn)
 }
 

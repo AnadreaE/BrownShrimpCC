@@ -65,7 +65,7 @@ temperature_funcSolver <- function(df, t){
 
 
 
-plot_sizeSpectra = function(sol_df, year, title){
+plot_sizeSpectra_old = function(sol_df, year, title){
   #First filter only the desired year
   past_year = paste0("31/12/", as.character(year-1))
   next_year = paste0("01/01/", as.character(year+1))
@@ -137,6 +137,85 @@ plot_sizeSpectra = function(sol_df, year, title){
 }
 
 
+# Helper: prepare quarterly matrices
+prep_sizeSpectra <- function(sol_df, year) {
+  past_year <- paste0("31/12/", as.character(year - 1))
+  next_year <- paste0("01/01/", as.character(year + 1))
+
+  sol_df_year <- sol_df %>%
+    filter(as.Date(dateTime) > as.Date(past_year, format = "%d/%m/%Y") &
+             as.Date(dateTime) < as.Date(next_year, format = "%d/%m/%Y")) %>%
+    select(BF1:BF8, BM1:BM5)
+
+  out <- list()
+
+  for (q in 1:4) {
+    init_idx <- 91.2 * (q - 1) + 1
+    final_idx <- 91.2 * q
+    quarter_data <- sol_df_year[init_idx:final_idx, ]
+
+    f_means <- colMeans(quarter_data[paste0("BF", 1:8)])
+    m_means <- colMeans(quarter_data[paste0("BM", 1:5)])
+
+    f_stack <- f_means[paste0("BF", 1:5)]
+    m_stack <- m_means
+    f_extra <- f_means[paste0("BF", 6:8)]
+
+    f_vals <- c(f_stack, f_extra)
+    m_vals <- c(m_stack, rep(0, length(f_extra)))
+
+    out[[q]] <- rbind("f" = f_vals, "m" = m_vals)
+  }
+  out
+}
+
+
+# Main plotting: can plot baseline + overlay
+plot_sizeSpectra <- function(sol_df_main, sol_df_overlay = NULL, year, title) {
+  cols <- c("f" = "#8856a7", "m" = "#add8e6")
+  label_map <- c("BL1","BL2","BL3","BL4","BL5","BL6","BL7","BL8")
+
+  mats_main <- prep_sizeSpectra(sol_df_main, year)
+  mats_overlay <- if (!is.null(sol_df_overlay)) prep_sizeSpectra(sol_df_overlay, year) else NULL
+
+  par(mfrow = c(2, 2))
+
+  for (q in 1:4) {
+    mat <- mats_main[[q]]
+    bar_centers <- barplot(
+      mat,
+      col = cols[rownames(mat)],
+      main = paste(title, "\n Q", q, "–", year),
+      names.arg = label_map,
+      las = 2,
+      cex.main = 1.5,
+      cex.axis = 1.2,
+      cex.names = 1.2,
+      ylim = if (!is.null(sol_df_overlay)) c(0, max(colSums(mat), colSums(mats_overlay[[q]]) ) * 1.1)
+                else c(0, max(colSums(mat))),
+      space = 0,
+      beside = FALSE,
+      legend.text = rownames(mat),
+      args.legend = list(x = "topright", bty = "n", inset = 0.02, cex = 1)
+    )
+
+    # 2. Overlay dataset on top (gray with outline)
+    if (!is.null(mats_overlay)) {
+      barplot(
+        mats_overlay[[q]],
+        col = c("f" = adjustcolor("gray50", alpha.f = 0.1),
+                "m" = adjustcolor("gray50", alpha.f = 0.1)),
+        border = "darkgray",
+        #lty = 2, #dashed lines
+        space = 0,
+        beside = FALSE,
+        add = TRUE,
+        axes = FALSE,
+        names.arg = rep("", length(label_map))  # suppress duplicate labels
+      )
+    }
+  }
+}
 
 
 

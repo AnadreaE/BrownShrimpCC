@@ -99,9 +99,9 @@ ttl_yearly_landing = ble_data %>%
             filter(year > 2012 & year < 2025) %>% #this line can be deleted when data from this previous years are updated
             mutate(rel_landing = ttl_year / mean(ttl_year))
 
-
+#agregar anho a esta tabla ! e integrar eso bien en el Eq. system (?)
 monthly_factors = ble_data %>%
-  filter(year > 2012 & year < 2025) %>% #this line can be deleted when data from this previous years are updated
+  filter(year > 2009 & year < 2024) %>% #Landing monthly data complete only from 2010
   group_by(month) %>%
   summarise(ttl_month = sum(t)) %>%
   mutate(rel_landing = ttl_month / mean(ttl_month))
@@ -149,7 +149,7 @@ K_func_briere = function(temperature, sex_params){
 #'
 #' @param w [g]
 #'
-#' @returns alpha value [gr (prey) m-2] , m2 considering 10 cm water depth as
+#' @returns alpha value [gr (food source) m-2] , m2 considering 10 cm water depth as
 #' @export
 #'
 #' @examples alpha_igr(convertL_to_W(5))
@@ -371,12 +371,12 @@ eta_J <- function(t_day, power_of = 2, J = 250) {
 
 
 
-ST_predation = function(t_day, Te, B_s, eta){
+ST_predation = function(t_day, Te, B_s, eta, beta = 9, sigma = 0.7){
   mu_ref = 0.025 #day^-1 #same as mesozooplankton paper
   f_t = 3**((Te-10)/10) #Q10 for Cod metabolism, source:10.1111/j.1439-0426.2007.01004.x
-  sigma = 0.7 #0.5
+  #sigma = 0.7 #0.5
   #eta = eta_J(t_day, J = J,  power_of = power_of)
-  beta = 18 # mesozooplankton paper = 18
+  #beta = 9 # mesozooplankton paper = 18
   gamma = 3.7469 *1e-6 #Km2 (Kg d)^-1 #original 0.1 m3 (molC d)^-1
   return(mu_ref*f_t*sigma*(gamma*B_s + beta*eta ))
 }
@@ -1014,16 +1014,11 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
     IL = ingestion_rate_b(Te, LJ, P*(L/ttl_biomass), parameters$general_params, parameters$Fem_params)#note that LJ is arbitrarily chossen as LL gives unrealistc values
     mL = respiration_rate_b(Te,LL, parameters$Fem_params)
     gL = shiftTo_juvenile(Te)
-    eta = max( 0.01, eta_J(t, J = 100, power_of = 2))
-    Pred = ST_predation(t, Te, L, eta)#eta = eta_J(t, J = 90, power_of = 4))
-    pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
+    eta = max( 0.01, eta_J(t, J = 120, power_of = 2))
+    Pred = ST_predation(t, Te, L, eta, beta = 13)#eta = eta_J(t, J = 90, power_of = 4))
+    pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
 
     food_consumption = min(P*(L/ttl_biomass), IL*L)
-    #if (food_consumption > P/9) food_consumption = 0 #P/9 because 1/9 for Larv,  4/9 for Fems and 4/9 for males
-    #This condition is needed to avoid that more food than actually available is being consumed
-    #if(consumed_plankton < P/9  ){  #P/9 because 1/9 for Larv,  4/6 for Fems and 4/9 for males
-    #  food_consumption = IL*L
-    #} else food_consumption = 0
 
     dL.dt = gE*E + food_consumption - mL*L - gL*L - pL*L
 
@@ -1051,9 +1046,9 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       g_i = shift_next_sizeClass(size_mean_F[i], Te, parameters$Fem_params,size_width=size_width)
       mol_i = molting_fraction(size_mean_F[i], Te)
       fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_F[i]) #fishing mortality
-      eta = eta_J(t, J = 180, power_of = 4)
-      Pred = ST_predation(t, Te, BF[i], eta)
-      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.35, l_pred = 10, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
+      eta = eta_J(t, J = 200, power_of = 2)
+      Pred = ST_predation(t, Te, BF[i], eta, beta = 9)
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 10, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_F) aging_i = parameters$general_params$a_mu
 
@@ -1068,7 +1063,7 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
 
       if (size_mean_F[i] < 5) fishery_catch_u = fishery_catch_u + fm_i*BF[i]
 
-      fishery_catch = fishery_catch + fm_i*BF[i]
+      if (size_mean_F[i] >= 5) fishery_catch = fishery_catch + fm_i*BF[i]
     }
 
     promoting = 0.5*promoting_L
@@ -1079,9 +1074,9 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       m_i = respiration_rate_b(Te, size_mean_M[i], parameters$M_params)
       g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
       fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_M[i]) #fishing mortality
-      eta = eta_J(t, J = 180, power_of = 4)
-      Pred = ST_predation(t, Te, BM[i], eta)
-      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.35, l_pred = 10, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
+      eta = eta_J(t, J = 200, power_of = 2)
+      Pred = ST_predation(t, Te, BM[i], eta, beta = 9)
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 10, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_M) aging_i = parameters$general_params$a_mu
 
@@ -1093,7 +1088,7 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
 
       if (size_mean_M[i] < 5) fishery_catch_u = fishery_catch_u + fm_i*BM[i]
 
-      fishery_catch = fishery_catch + fm_i*BM[i]
+      if (size_mean_F[i] >= 5) fishery_catch = fishery_catch + fm_i*BM[i]
 
     }
 

@@ -14,9 +14,6 @@ library(latex2exp)
 #read Ble data
 ble_data = read.csv("./data/BLE_Inlandslandungen_SpeiseKrabbe.csv", sep = ';')
 
-
-plot(ble_data$month[ble_data$year==2015], ble_data$t[ble_data$year==2015], type = 'b')
-
 ### Determine yearly factors#####
 #This yearly factor, will change the intensity of fishery according landing data.
 #the factor will multiply the baseline fishery intensity estimated to be 0.05
@@ -25,7 +22,7 @@ years_landings = ble_data$year
 ttl_yearly_landing = ble_data %>%
   group_by(year) %>%
   summarise(ttl_year = sum(t)) %>%
-  filter(year > 2012 & year < 2025) %>% #this line can be deleted when data from this previous years are updated
+  filter(year > 2009 & year < 2025) %>% #this line can be deleted when data from this previous years are updated
   mutate(rel_landing = ttl_year / mean(ttl_year))
 
 plot(ttl_yearly_landing$year, ttl_yearly_landing$rel_landing, type = 'b')
@@ -34,12 +31,12 @@ plot(ttl_yearly_landing$year, ttl_yearly_landing$rel_landing, type = 'b')
 #Idea is to compare before and after imposition of mesh size, howwever upto today 03.08.25
 #data beore 2013 is too poor to give good impressions
 
-years = c(2011,2013,2014, 2015, 2016, 2018,2019, 2022)
-
-cols =  brewer.pal(length(years),"Dark2")
+years = c(2011,2013,2014, 2015, 2016, 2018,2019, 2020)
+#Colors: pink gradient before 2016 and blu after
+cols =  c('#8856a7','#f768a1','#c51b8a','#7a0177', '#7bccc4','#41b6c4','#2c7fb8','#253494')#brewer.pal(length(years),"Dark2")
 #dev.off()
 par(mfrow = c(1,1))
-plot(ble_data$month[ble_data$year ==2013 ], ble_data$t[ble_data$year == 2013 ], type = 'b',
+plot(ble_data$month[ble_data$year == years[1] ], ble_data$t[ble_data$year == years[1] ], type = 'b',
      xlab = 'Months', ylab = 'landings in tones' , col = cols[1], # main = paste('Landings')
      ylim = c(0,2500), xlim = c(0,12), lwd = 2 )
 
