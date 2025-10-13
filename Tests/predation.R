@@ -22,18 +22,20 @@ cod_larvRange = seq(2.5, 3, 0.01) #[cm]
 shrimp_lRange = seq(0.155, 8.5, 0.006981605) #(8.5-0.15)/1176 steps to meet same length as cod L range
 
 
-#dev.off()
+dev.off()
 plot(cod_lRange, exp(lopt(cod_lRange)), main = 'Optimal prey lenght', xlab= 'predator L [cm]',
      ylab = 'prey (shrimp) L [cm]' , col = 'gray41', las = 1, cex.axis=1.5, cex.lab=1.5, cex.main = 1.4,
      xlim = c(0,60), ylim = c(0,10), type = "n")#, cex.main=1.3, xlim = c(1,4), ylim = c(0,2))
 rect(xleft = 0, ybottom = 0, xright = 62, ytop = 1,
      col = 'skyblue3', border = NA) #larvae and juv1 #color Offshore
-rect(xleft = 0, ybottom = 1, xright = 62, ytop = 4,
+rect(xleft = 0, ybottom = 1, xright = 62, ytop = 3,
      col = 'lightskyblue1', border = NA) # zoea 4 and 5 (juv2,3 and 4) #color intertidal
-rect(xleft = 0, ybottom = 4, xright = 62, ytop = 6,
+rect(xleft = 0, ybottom = 3, xright = 62, ytop = 4,
      col = 'papayawhip', border = NA) #juv V #color bottom, sea floor
-rect(xleft = 0, ybottom = 6, xright = 62, ytop = 8.7,
+rect(xleft = 0, ybottom = 4, xright = 62, ytop = 8,
      col = 'lightskyblue1', border = NA) #Adult #color bottom, sea floor
+rect(xleft = 0, ybottom = 8, xright = 62, ytop = 9,
+     col = 'skyblue3', border = NA)
 abline(h=0.2, lty= 2, col = 'lightsalmon', lwd=2)
 abline(h=8.5, lty=2, col='tomato3', lwd = 2)
 points(cod_lRange, exp(lopt(cod_lRange)), col = 'gray41', lwd = 1.5)
@@ -137,5 +139,6 @@ plot(days_3years, predatio_preasure)
 
 #See how new_predation function look like:
 plot(days_3years, new_Bpredator(days_3years), main = 'see preador funciton')
+
 
 

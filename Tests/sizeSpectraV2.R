@@ -78,14 +78,14 @@ plot_sizeSpectra(test_fishery, year = 2015, title = "Fi")
 #### TEST V5 (4 out of 4) PREDATION AND FISHERY####
 
 bothPF_params = parameters_solv
-bothPF_params$general_params$Fi = 0.045 #reduced fishery
+bothPF_params$general_params$Fi = 0.05 #reduced fishery
 
 start <- Sys.time()
 test_bothFP <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_bothFP, year = 2015, title = "F&P")
+plot_sizeSpectra(sol_df_main = test_bothFP, year = 2015, title = "F&P")
 
 #Plot fishery catch:
 #define years to be inspected

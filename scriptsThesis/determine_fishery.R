@@ -31,14 +31,14 @@ plot(ttl_yearly_landing$year, ttl_yearly_landing$rel_landing, type = 'b')
 #Idea is to compare before and after imposition of mesh size, howwever upto today 03.08.25
 #data beore 2013 is too poor to give good impressions
 
-years = c(2011,2013,2014, 2015, 2016, 2018,2019, 2020)
+years = c(2013,2014, 2015, 2016, 2017,2018)
 #Colors: pink gradient before 2016 and blu after
-cols =  c('#8856a7','#f768a1','#c51b8a','#7a0177', '#7bccc4','#41b6c4','#2c7fb8','#253494')#brewer.pal(length(years),"Dark2")
+cols =  brewer.pal(length(years),"Dark2")#c('#8856a7','#f768a1','#c51b8a','#7a0177', '#7bccc4','#41b6c4','#2c7fb8','#253494')#brewer.pal(length(years),"Dark2")
 #dev.off()
 par(mfrow = c(1,1))
 plot(ble_data$month[ble_data$year == years[1] ], ble_data$t[ble_data$year == years[1] ], type = 'b',
-     xlab = 'Months', ylab = 'landings in tones' , col = cols[1], # main = paste('Landings')
-     ylim = c(0,2500), xlim = c(0,12), lwd = 2 )
+     xlab = 'Months', ylab = 'Landings [t]' , col = cols[1], # main = paste('Landings')
+     ylim = c(0,2500), xlim = c(0,12), lwd = 2 , las = 1, cex.lab = 1.15)
 
 #par(mfrow = c(4,1))
 for (i in 2:length(years)){
@@ -46,7 +46,7 @@ for (i in 2:length(years)){
        main = paste('Landings', i), col = cols[i] , lwd = 2)
 }
 
-legend('topleft', legend = as.character(years), fill = cols)
+legend('topleft', legend = as.character(years), fill = cols, y.intersp = 0.7)
 
 landings_january_avg = mean(ble_data$t[ble_data$month ==1])
 

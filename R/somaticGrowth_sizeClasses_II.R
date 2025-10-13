@@ -49,6 +49,8 @@ LA1 = (adultI_min + adultI_max)/2
 LA2 = (adultII_min + adultII_max)/2 #cm
 LA3 = (adultIII_min + adultIII_max)/2  #cm
 
+sizes = c(LL, LJ, LJ2, LJ3, LJ4, LJ5, LA1, LA2, LA3)
+
 parameters_solv = list(
   Fem_params = list(
     L_inf = 8.5,
@@ -79,8 +81,11 @@ parameters_solv = list(
     const_c = 0.01,
     #Fishery
     Fi = 0.05, #only as example for the time being
+    L50 = 4.02,#applies to a mesh size of cod-end of 22 mm
+    SR = 0.82, #applies to a mesh size of cod-end of 22 mm
+    #Ingestion rate & others
     Imax_ik = 0.1,
-    a_mu = 0.000913, #aging daily mortality 1/3years
+    a_mu = 0.000913, #aging daily mortality 1/3years for fems, 2 years for males
     L_mat = 5.5 #size at maturation fem [cm]
   )
 )
@@ -96,12 +101,12 @@ years_landings = ble_data$year
 ttl_yearly_landing = ble_data %>%
             group_by(year) %>%
             summarise(ttl_year = sum(t)) %>%
-            filter(year > 2012 & year < 2025) %>% #this line can be deleted when data from this previous years are updated
+            filter(year < 2025) %>% #Landing data avaiable from 2010
             mutate(rel_landing = ttl_year / mean(ttl_year))
 
 #agregar anho a esta tabla ! e integrar eso bien en el Eq. system (?)
 monthly_factors = ble_data %>%
-  filter(year > 2009 & year < 2024) %>% #Landing monthly data complete only from 2010
+  filter(year < 2024) %>%  #Landing data avaiable from 2010
   group_by(month) %>%
   summarise(ttl_month = sum(t)) %>%
   mutate(rel_landing = ttl_month / mean(ttl_month))
@@ -203,7 +208,7 @@ spawning_rate_b = function(L){
   #rate =  0.253161 * w^0.1796667
   L = L*10
   temming_nr_egg = 0.01805*L^3.539
-  avg_weight_egg = 17.725*10^-6 #[gr] ~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
+  avg_weight_egg = 17.725*10^-9 #[kg] ~avg 17.725 microgramm over the year (from table from seasonal changes on eggs Urzua)
   return(temming_nr_egg*avg_weight_egg)
 }
 
@@ -296,6 +301,8 @@ shiftTo_juvenile = function(Te){
 
 
 #' Selectivity probability (Fishery)
+#'#Rename it to Sel Logit !!! it has been changed
+#'
 #'
 #' @param L
 #' @param L50
@@ -308,7 +315,7 @@ shiftTo_juvenile = function(Te){
 #' @examples sel_probit(6) or sel_probit(L50 = 4.49 , SR = 1.56)
 
 sel_probit = function(L, L50 = 4.49 , SR = 1.56){
-  nominator = exp( (1.349/SR) * (L - L50))
+  nominator = exp( (log(9)/SR) * (L - L50))
   denominator = 1 + nominator
   return(nominator / denominator)
 }
@@ -371,7 +378,7 @@ eta_J <- function(t_day, power_of = 2, J = 250) {
 
 
 
-ST_predation = function(t_day, Te, B_s, eta, beta = 9, sigma = 0.7){
+ST_predation = function(t_day, Te, B_s, eta, beta = 9, sigma = 0.8){
   mu_ref = 0.025 #day^-1 #same as mesozooplankton paper
   f_t = 3**((Te-10)/10) #Q10 for Cod metabolism, source:10.1111/j.1439-0426.2007.01004.x
   #sigma = 0.7 #0.5
@@ -1014,8 +1021,340 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
     IL = ingestion_rate_b(Te, LJ, P*(L/ttl_biomass), parameters$general_params, parameters$Fem_params)#note that LJ is arbitrarily chossen as LL gives unrealistc values
     mL = respiration_rate_b(Te,LL, parameters$Fem_params)
     gL = shiftTo_juvenile(Te)
+    eta = max( 0.01, eta_J(t, J = 190, power_of = 2))
+    Pred = ST_predation(t, Te, L, eta, beta = 15)#eta = eta_J(t, J = 90, power_of = 4))
+    pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
+
+    food_consumption = min(P*(L/ttl_biomass), IL*L)
+
+    dL.dt = gE*E + food_consumption - mL*L - gL*L - pL*L
+
+    consumed_plankton = consumed_plankton + food_consumption #updates plankton consumed by larvae
+
+    promoting_L = gL*L
+    produced_eggs = 0
+
+    promoting_f = 0.5*promoting_L
+    #promoting_sizeClass = 0
+    mol_i = 0
+
+    mortality_eggs = 0
+
+    bycatch = 0 #fishery of undersized classes
+    fishery_catch = 0
+
+    food_consumption_f = 0
+    #Juvenile or adult shrimp F
+    for(i in 1:N_max_F){
+      I_i_f = ingestion_rate_b(Te, size_mean_F[i], P*(BF[i]/ttl_biomass), parameters$general_params, parameters$Fem_params)
+      s_i = spawning_rate_b(size_mean_F[i])
+      m_i = respiration_rate_b(Te, size_mean_F[i], parameters$Fem_params)
+      g_i = shift_next_sizeClass(size_mean_F[i], Te, parameters$Fem_params,size_width=size_width)
+      mol_i = molting_fraction(size_mean_F[i], Te)
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_F[i], L50 = parameters$general_params$L50, SR = parameters$general_params$SR) #fishing mortality
+      eta = eta_J(t, J = 100, power_of = 2)
+      Pred = ST_predation(t, Te, BF[i], eta, beta = 12)
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 15, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_F) aging_i = parameters$general_params$a_mu
+
+      food_consumption_f = min( P*(BF[i]/ttl_biomass) ,food_consumption_f + I_i_f*BF[i])
+
+      dBF.dt[i] = promoting_f + food_consumption_f - BF[i]*(m_i + mol_i*(1/convertL_to_W(size_mean_F[i]))*s_i + g_i + fm_i + pL_i + aging_i) #old spawning: mol_i*(1/convertL_to_W(i))*s_i
+      #promoting_sizeClass = g_i*BF[i]
+      produced_eggs = produced_eggs + s_i*mol_i*BF[i]/(convertL_to_W(size_mean_F[i])/1000) #convertLtoW result is g #
+      mortality_eggs = s_i*mol_i*( BF[i]*fm_i + BF[i]*pL_i)
+      consumed_plankton = consumed_plankton + food_consumption_f #I_i_f*BF[i]
+      promoting_f = g_i*BF[i]
+
+      if (size_mean_F[i] < 5) bycatch = bycatch + fm_i*BF[i]
+
+      if (size_mean_F[i] == 5) {
+        bycatch = bycatch + fm_i*BF[i]*0.3
+        fishery_catch = fishery_catch + fm_i*BF[i]*0.7
+      }
+
+      if (size_mean_F[i] >= 6) fishery_catch = fishery_catch + fm_i*BF[i]
+    }
+
+    #MALES
+    promoting = 0.5*promoting_L
+    food_consumption_m = 0
+    #Juvenile or adult shrimp M
+    for(i in 1:N_max_M){
+      I_i = ingestion_rate_b(Te, size_mean_M[i], P*(BM[i]/ttl_biomass), parameters$general_params, parameters$M_params)
+      m_i = respiration_rate_b(Te, size_mean_M[i], parameters$M_params)
+      g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_M[i], L50 = parameters$general_params$L50, SR = parameters$general_params$SR) #fishing mortality
+      eta = eta_J(t, J = 100, power_of = 2)
+      Pred = ST_predation(t, Te, BM[i], eta, beta = 12)
+      pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik, l_pred = 15, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_M) aging_i = parameters$general_params$a_mu
+
+      food_consumption_m = min(  P*(BM[i]/ttl_biomass) ,food_consumption_m + I_i*BM[i])
+
+      dBM.dt[i] = promoting + food_consumption_m - BM[i]*(m_i + g_i + fm_i + pL_i + aging_i)
+      promoting = g_i*BM[i]
+      consumed_plankton = consumed_plankton + food_consumption_m#I_i*BM[i]
+
+      if (i < 5) bycatch = bycatch + fm_i*BM[i]
+
+      if (i == N_max_M) {
+        bycatch = bycatch + fm_i*BM[i]*0.3
+        fishery_catch = fishery_catch + fm_i*BM[i]*0.7
+      }
+
+     # if (size_mean_M[i] >= 5) fishery_catch = fishery_catch + fm_i*BM[i]
+
+    }
+
+    #Eggs
+    dE.dt =  produced_eggs - gE*E - mortality_eggs
+
+    #Plankton
+    #dP.dt = max(0, new_food(t) - consumed_plankton)
+    dP.dt = new_food(t, Te, scale = 2) - consumed_plankton #1 es immigration rate ()
+
+    return(list(c(dP.dt, dE.dt, dL.dt,
+                  dBF.dt, dBM.dt) ,
+                catch_undersized = bycatch, catch_commercial = fishery_catch ))
+
+  }
+
+  sol = euler(y = state, times = t, func = system.equations, parms = parameters)#, method=the.method)
+  sol = as.data.frame(sol)
+
+  start_date <- as.POSIXct(temperature_dataSet$date_time[1], format="%Y-%m-%d", tz = "UTC")
+
+  sol <- mutate(sol, dateTime = start_date + sol$time * 86400) #86400 seconds in one day
+
+  return(sol)
+}
+
+#in .v6 we want to make it possible to simulate several years (from 2010 to 2023), eventhough, the
+#paramers fo predation and fishery change all over these years
+
+parameters_solv.v2 = list(
+  Fem_params = list(
+    L_inf = 8.5,
+    #K-func:
+    r_max = 0.007638409,
+    alpha = 0.539550,
+    beta = 0.27774,
+    #Biomass shifts
+    a_est_factor = 0.0947, #0.07254394,
+    b_est_factor = 0.811, #0.9319859,
+    intercept =  -0.5243291 #-0.4968367 #-0.522060 + L_mean*0.006774
+  ),
+  M_params = list(
+    L_inf = 5.5,
+    #K-func:
+    r_max = 0.01585687,
+    alpha = 0.634518,
+    beta = 0.29947,
+    #Biomass shifts
+    intercept = -0.5046928,#-0.5066616,
+    a_est_factor = 0.188, #0.1192449,
+    b_est_factor = 0.842 #1.328571
+  ),
+  general_params = list(
+    #func response
+    m = 3,
+    const_c = 0.01,
+    #Fishery
+    Fi = 0.05, #only as example for the time being
+    #L50 = 4.02,#applies to a mesh size of cod-end of 22 mm
+    #SR = 0.82, #applies to a mesh size of cod-end of 22 mm
+    #Ingestion rate & others
+    #Imax_ik = 0.1,
+    a_mu = 0.000913, #aging daily mortality 1/3years for fems, 2 years for males
+    L_mat = 5.5 #size at maturation fem [cm]
+  )
+)
+
+#to represent the slightly growing population of predation:
+
+solver_sizeClass.v6 = function(t, state, parameters, temperature_dataSet, PF_dataset){
+  system.equations = function(t, state, parameters) {
+    #following line avoid negative values in state variables
+
+    state[state < 0] = 0 # shift negative biomasses to 0
+    list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
+
+    BF = state[grep("^BF", names(state))]#extract all elements from state whose names start with "BF"
+    BM = state[grep("^BM", names(state))]
+
+    dBF.dt = BF * 0
+    dBM.dt = BM * 0
+
+    ttl_biomass = L + sum(BF) + sum(BM)
+
+    Te = temperature_funcSolver(temperature_dataSet, t) # getting temperature for day t from temperature_dataSet
+    month = month(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
+    year = year(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
+
+    I_max.i = PF_dataset$Imax[PF_dataset$year == year]
+    L50.i = PF_dataset$L50[PF_dataset$year == year]
+    SR.i = PF_dataset$SR[PF_dataset$year == 2016]
+
+    consumed_plankton = 0 #var related to dP/dt (plancton diff eq. )
+    food_consumption = 0 #var related to growth of shrimp through ingestion rate
+
+    # predator
+    #dPred.dt = new_Bpredator(t) - Pred*0.15 #0.08 mortality
+
+    #LARVAE
+    gE = hatch_eggs(Te)
+    IL = ingestion_rate_b(Te, LJ, P*(L/ttl_biomass), parameters$general_params, parameters$Fem_params)#note that LJ is arbitrarily chossen as LL gives unrealistc values
+    mL = respiration_rate_b(Te,LL, parameters$Fem_params)
+    gL = shiftTo_juvenile(Te)
+    eta = max( 0.01, eta_J(t, J = 190, power_of = 2))
+    Pred = ST_predation(t, Te, L, eta, beta = 15)#eta = eta_J(t, J = 90, power_of = 4))
+    pL = Pred*ingestion_kernel(I_max= I_max.i, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
+
+    food_consumption = min(P*(L/ttl_biomass), IL*L)
+
+    dL.dt = gE*E + food_consumption - mL*L - gL*L - pL*L
+
+    consumed_plankton = consumed_plankton + food_consumption #updates plankton consumed by larvae
+
+    promoting_L = gL*L
+    produced_eggs = 0
+
+    promoting_f = 0.5*promoting_L
+    #promoting_sizeClass = 0
+    mol_i = 0
+
+    mortality_eggs = 0
+
+    bycatch = 0 #fishery of undersized classes
+    fishery_catch = 0
+
+    food_consumption_f = 0
+    #Juvenile or adult shrimp F
+    for(i in 1:N_max_F){
+      I_i_f = ingestion_rate_b(Te, size_mean_F[i], P*(BF[i]/ttl_biomass), parameters$general_params, parameters$Fem_params)
+      s_i = spawning_rate_b(size_mean_F[i])
+      m_i = respiration_rate_b(Te, size_mean_F[i], parameters$Fem_params)
+      g_i = shift_next_sizeClass(size_mean_F[i], Te, parameters$Fem_params,size_width=size_width)
+      mol_i = molting_fraction(size_mean_F[i], Te)
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_F[i], L50 = L50.i, SR = SR.i) #fishing mortality
+      eta = eta_J(t, J = 100, power_of = 2)
+      Pred = ST_predation(t, Te, BF[i], eta, beta = 12)
+      pL_i = Pred*ingestion_kernel(I_max= I_max.i, l_pred = 15, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_F) aging_i = parameters$general_params$a_mu
+
+      food_consumption_f = min( P*(BF[i]/ttl_biomass) ,food_consumption_f + I_i_f*BF[i])
+
+      dBF.dt[i] = promoting_f + food_consumption_f - BF[i]*(m_i + mol_i*(1/convertL_to_W(size_mean_F[i]))*s_i + g_i + fm_i + pL_i + aging_i) #old spawning: mol_i*(1/convertL_to_W(i))*s_i
+      #promoting_sizeClass = g_i*BF[i]
+      produced_eggs = produced_eggs + s_i*mol_i*BF[i]/(convertL_to_W(size_mean_F[i])/1000) #convertLtoW result is g #
+      mortality_eggs = s_i*mol_i*( BF[i]*fm_i + BF[i]*pL_i)
+      consumed_plankton = consumed_plankton + food_consumption_f #I_i_f*BF[i]
+      promoting_f = g_i*BF[i]
+
+      if (size_mean_F[i] < 5) bycatch = bycatch + fm_i*BF[i]
+
+      if (size_mean_F[i] == 5) {
+        bycatch = bycatch + fm_i*BF[i]*0.3
+        fishery_catch = fishery_catch + fm_i*BF[i]*0.7
+      }
+
+      if (size_mean_F[i] >= 6) fishery_catch = fishery_catch + fm_i*BF[i]
+    }
+
+    #MALES
+    promoting = 0.5*promoting_L
+    food_consumption_m = 0
+    #Juvenile or adult shrimp M
+    for(i in 1:N_max_M){
+      I_i = ingestion_rate_b(Te, size_mean_M[i], P*(BM[i]/ttl_biomass), parameters$general_params, parameters$M_params)
+      m_i = respiration_rate_b(Te, size_mean_M[i], parameters$M_params)
+      g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_M[i], L50 = L50.i, SR = SR.i) #fishing mortality
+      eta = eta_J(t, J = 100, power_of = 2)
+      Pred = ST_predation(t, Te, BM[i], eta, beta = 12)
+      pL_i = Pred*ingestion_kernel(I_max= I_max.i, l_pred = 15, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
+      aging_i = 0.0
+      if(i == N_max_M) aging_i = parameters$general_params$a_mu
+
+      food_consumption_m = min(  P*(BM[i]/ttl_biomass) ,food_consumption_m + I_i*BM[i])
+
+      dBM.dt[i] = promoting + food_consumption_m - BM[i]*(m_i + g_i + fm_i + pL_i + aging_i)
+      promoting = g_i*BM[i]
+      consumed_plankton = consumed_plankton + food_consumption_m#I_i*BM[i]
+
+      if (i < 5) bycatch = bycatch + fm_i*BM[i]
+
+      if (i == N_max_M) {
+        bycatch = bycatch + fm_i*BM[i]*0.3
+        fishery_catch = fishery_catch + fm_i*BM[i]*0.7
+      }
+
+      # if (size_mean_M[i] >= 5) fishery_catch = fishery_catch + fm_i*BM[i]
+
+    }
+
+    #Eggs
+    dE.dt =  produced_eggs - gE*E - mortality_eggs
+
+    #Plankton
+    #dP.dt = max(0, new_food(t) - consumed_plankton)
+    dP.dt = new_food(t, Te, scale = 2) - consumed_plankton #1 es immigration rate ()
+
+    return(list(c(dP.dt, dE.dt, dL.dt,
+                  dBF.dt, dBM.dt) ,
+                catch_undersized = bycatch, catch_commercial = fishery_catch ))
+
+  }
+
+  sol = euler(y = state, times = t, func = system.equations, parms = parameters)#, method=the.method)
+  sol = as.data.frame(sol)
+
+  start_date <- as.POSIXct(temperature_dataSet$date_time[1], format="%Y-%m-%d", tz = "UTC")
+
+  sol <- mutate(sol, dateTime = start_date + sol$time * 86400) #86400 seconds in one day
+
+  return(sol)
+}
+
+
+
+#V6 shall allow to get size structure of fished and bycatch too
+solver_sizeClass.v6_not_developed_to_the_end  = function(t, state, parameters, temperature_dataSet){
+  system.equations = function(t, state, parameters) {
+    #following line avoid negative values in state variables
+
+    state[state < 0] = 0 # shift negative biomasses to 0
+    list2env(as.list(state), envir = environment())  # re-assign the corrected state variables
+
+    BF = state[grep("^BF", names(state))]#extract all elements from state whose names start with "BF"
+    BM = state[grep("^BM", names(state))]
+
+    dBF.dt = BF * 0
+    dBM.dt = BM * 0
+
+    ttl_biomass = L + sum(BF) + sum(BM)
+
+    Te = temperature_funcSolver(temperature_dataSet, t) # getting temperature for day t from temperature_dataSet
+    month = month(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
+    year = year(temperature_dataSet$date_time[t+1]) # t starts in 0, but indices in R start at 1
+
+    consumed_plankton = 0 #var related to dP/dt (plancton diff eq. )
+    food_consumption = 0 #var related to growth of shrimp through ingestion rate
+
+    # predator
+    #dPred.dt = new_Bpredator(t) - Pred*0.15 #0.08 mortality
+
+    #LARVAE
+    gE = hatch_eggs(Te)
+    IL = ingestion_rate_b(Te, LJ, P*(L/ttl_biomass), parameters$general_params, parameters$Fem_params)#note that LJ is arbitrarily chossen as LL gives unrealistc values
+    mL = respiration_rate_b(Te,LL, parameters$Fem_params)
+    gL = shiftTo_juvenile(Te)
     eta = max( 0.01, eta_J(t, J = 120, power_of = 2))
-    Pred = ST_predation(t, Te, L, eta, beta = 13)#eta = eta_J(t, J = 90, power_of = 4))
+    Pred = ST_predation(t, Te, L, eta, beta = 15)#13
     pL = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 2.75, l_prey = LL) #predation Larvae #l_pred abg of larvae cod
 
     food_consumption = min(P*(L/ttl_biomass), IL*L)
@@ -1033,8 +1372,8 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
 
     mortality_eggs = 0
 
-    fishery_catch_u = 0 #fishery of undersized classes
-    fishery_catch = 0
+    bycatch = 0*seq(1,4) #fishery of undersized classes L1. L2, L3 and L4
+    fishery_catch = 0*seq(1,4)
 
     food_consumption_f = 0
     #Juvenile or adult shrimp F
@@ -1045,9 +1384,9 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       m_i = respiration_rate_b(Te, size_mean_F[i], parameters$Fem_params)
       g_i = shift_next_sizeClass(size_mean_F[i], Te, parameters$Fem_params,size_width=size_width)
       mol_i = molting_fraction(size_mean_F[i], Te)
-      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_F[i]) #fishing mortality
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_F[i], L50 = parameters$general_params$L50, SR = parameters$general_params$SR) #fishing mortality
       eta = eta_J(t, J = 200, power_of = 2)
-      Pred = ST_predation(t, Te, BF[i], eta, beta = 9)
+      Pred = ST_predation(t, Te, BF[i], eta, beta = 12)#9
       pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 10, l_prey = size_mean_F[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_F) aging_i = parameters$general_params$a_mu
@@ -1061,9 +1400,14 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       consumed_plankton = consumed_plankton + food_consumption_f #I_i_f*BF[i]
       promoting_f = g_i*BF[i]
 
-      if (size_mean_F[i] < 5) fishery_catch_u = fishery_catch_u + fm_i*BF[i]
+      if (size_mean_F[i] < 4) bycatch[i] = bycatch[i] + fm_i*BF[i]
 
-      if (size_mean_F[i] >= 5) fishery_catch = fishery_catch + fm_i*BF[i]
+      if (size_mean_F[i] == 4) {
+        bycatch = bycatch + fm_i*BF[i]*0.5
+        fishery_catch = fishery_catch + fm_i*BF[i]*0.5
+      }
+
+      if (size_mean_F[i] >= 5) fishery_catch[i-4] = fishery_catch[i-4] + fm_i*BF[i]
     }
 
     promoting = 0.5*promoting_L
@@ -1073,9 +1417,9 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
       I_i = ingestion_rate_b(Te, size_mean_M[i], P*(BM[i]/ttl_biomass), parameters$general_params, parameters$M_params)
       m_i = respiration_rate_b(Te, size_mean_M[i], parameters$M_params)
       g_i = shift_next_sizeClass(size_mean_M[i], Te, parameters$M_params,size_width=size_width)
-      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_M[i]) #fishing mortality
+      fm_i = (parameters$general_params$Fi * ttl_yearly_landing$rel_landing[ttl_yearly_landing$year == year])*monthly_factors.v[month]*sel_probit(size_mean_M[i], L50 = parameters$general_params$L50, SR = parameters$general_params$SR) #fishing mortality
       eta = eta_J(t, J = 200, power_of = 2)
-      Pred = ST_predation(t, Te, BM[i], eta, beta = 9)
+      Pred = ST_predation(t, Te, BM[i], eta, beta = 12)#9
       pL_i = Pred*ingestion_kernel(I_max= parameters$general_params$Imax_ik*0.5, l_pred = 10, l_prey = size_mean_M[i]) #predation Larvae #l_pred abg of larvae cod
       aging_i = 0.0
       if(i == N_max_M) aging_i = parameters$general_params$a_mu
@@ -1084,11 +1428,16 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
 
       dBM.dt[i] = promoting + food_consumption_m - BM[i]*(m_i + g_i + fm_i + pL_i + aging_i)
       promoting = g_i*BM[i]
-      consumed_plankton = consumed_plankton + food_consumption_m#I_i*BM[i]
+      consumed_plankton = consumed_plankton + food_consumption_m #I_i*BM[i]
 
-      if (size_mean_M[i] < 5) fishery_catch_u = fishery_catch_u + fm_i*BM[i]
+      if (size_mean_M[i] < 4) bycatch[i] = bycatch[i] + fm_i*BM[i]
 
-      if (size_mean_F[i] >= 5) fishery_catch = fishery_catch + fm_i*BM[i]
+      if (size_mean_F[i] == 4) {
+        bycatch = bycatch + fm_i*BF[i]*0.5
+        fishery_catch = fishery_catch + fm_i*BF[i]*0.5
+      }
+
+      if (size_mean_F[i] >= 5) fishery_catch[i-4] = fishery_catch[i-4] + fm_i*BM[i]
 
     }
 
@@ -1101,7 +1450,7 @@ solver_sizeClass.v5 = function(t, state, parameters, temperature_dataSet){
 
     return(list(c(dP.dt, dE.dt, dL.dt,
                   dBF.dt, dBM.dt) ,
-                catch_undersized = fishery_catch_u, catch_commercial = fishery_catch ))
+                catch_undersized = bycatch, catch_commercial = fishery_catch ))
 
   }
 

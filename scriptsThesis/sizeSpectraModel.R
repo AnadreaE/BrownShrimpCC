@@ -455,7 +455,7 @@ size_classes_proportions = colSums(mat_prop)
 
 size_dist_biomass = 14.71*size_classes_proportions
 
-est_biomass_dist = 100*size_dist_biomass/5 #considering that fishery is 5% of actual stock
+est_biomass_dist = size_dist_biomass/(0.04/365*31) #considering that fishery is 5% of actual stock
 
 F_proportions =mat["f", ] / colSums(mat)
 M_proportions =mat["m", ] / colSums(mat)

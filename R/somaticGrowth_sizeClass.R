@@ -20,8 +20,11 @@
 #' @examples convertL_to_W(L = 2.5)
 
 convertL_to_W = function(L){
-  const_c = parameters_solv$general_params$const_c #reference density g/cm^m
-  m = parameters_solv$general_params$m  # ww-lenght scaling exponent
+  #const_c = parameters_solv$general_params$const_c #reference density g/cm^m
+  #m = parameters_solv$general_params$m  # ww-lenght scaling exponent
+  L = L*10
+  const_c = 4.625e-6
+  m = 3.08
   return (const_c*L^m)
 }
 
@@ -113,7 +116,8 @@ respiration_rate = function(temperature,L){
 #' @examples
 new_food = function(t, Te, scale = 2) {
   Q10 = 1.6**((Te-10)/10)
-  toReturn = scale*Q10* (3.3 + cos( (2*pi/ 365)*(t-240) ) )#^2 #102 spring #2.2
+  toReturn = scale*Q10* (7 + cos( (2*pi/ 365)*(t-215) ) )#^2 #102 spring #2.2
+  #toReturn = scale*Q10* (2 + cos( (2*pi/ 365)*(t-215) ) )^2 #102 spring #2.2
   return(toReturn)
 }
 
