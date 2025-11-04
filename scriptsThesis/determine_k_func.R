@@ -2,8 +2,17 @@ library(dplyr)
 library(ggplot2)
 library(RColorBrewer)
 library(deSolve)
+#install.packages("minpack.lm")
 library(minpack.lm)
 library(BrownShrimp)
+
+##############################################
+## In this file, we find the steps followed ##
+## to develop the K (growth parameter from  ##
+## von Bertalanffy growth function) as      ##
+## function of temperature                  ##
+##############################################
+
 
 ### UPLOAD AND FORMAT TEMPERATURE DATA ###
 

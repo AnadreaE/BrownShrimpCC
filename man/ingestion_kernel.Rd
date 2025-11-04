@@ -2,7 +2,8 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{ingestion_kernel}
 \alias{ingestion_kernel}
-\title{Ingestion kernel function for predation}
+\title{Predation activity
+Ingestion kernel function for predation}
 \usage{
 ingestion_kernel(I_max, l_pred, l_prey)
 }
@@ -15,6 +16,7 @@ ingestion_kernel(I_max, l_pred, l_prey)
 probability that size class l_prey will be eaten by predator of size l_pred \link{day^-1}
 }
 \description{
+Predation activity
 Ingestion kernel function for predation
 }
 \examples{

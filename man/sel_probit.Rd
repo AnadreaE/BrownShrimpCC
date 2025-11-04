@@ -2,7 +2,8 @@
 % Please edit documentation in R/somaticGrowth_sizeClasses_II.R
 \name{sel_probit}
 \alias{sel_probit}
-\title{Selectivity probability (Fishery)}
+\title{Selectivity probability (Fishery)
+#Rename it to Sel Logit !!! it has been changed}
 \usage{
 sel_probit(L, L50 = 4.49, SR = 1.56)
 }
@@ -15,6 +16,7 @@ of characteristics L50 and SR
 }
 \description{
 Selectivity probability (Fishery)
+#Rename it to Sel Logit !!! it has been changed
 }
 \examples{
 sel_probit(6) or sel_probit(L50 = 4.49 , SR = 1.56)

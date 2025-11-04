@@ -57,17 +57,6 @@ K_func = function(temperature){
 #' @examples
 
 
-molting_fraction_old = function(L, Te, Fem_params){
-  w = convertL_to_W(L)
-  vB = 3*K_func_briere(Te, parameters_solv$Fem_params)*w
-  interc = 0.01493457*exp(L*-0.10730890)
-  fract = 13.96105*exp(L*-0.5684764)
-  return(interc + vB*fract )
-}
-
-
-
-
 molting_fraction <- function(L, temperature){
   mf = 0
   L=L*10 #*10 because Teming eq. is in mm
@@ -87,25 +76,7 @@ molting_fraction <- function(L, temperature){
 
 
 
-#' *Deprecated Natural mortality
-#'
-#' @param L size [cm]
-#' @param temperature Temperature [°C]
-#'
-#' @returns [gr / time ]
-#' @export
-#'
-#' @examples
-respiration_rate = function(temperature,L){
-  mu = m*convertL_to_W(L)*K_func(temperature)*0.1 # this is the rigth term of vB eq.#0.1
-  #if (L>5) {
-  #  mu =  convertL_to_W(L) *K_func(temperature) *( 1 - molting_fraction(L, temperature)) #tbc (1-molting_fraction) all non molting fems still have a natural mortality
-  #}
-  return(mu)
-}
-
-
-#new_food = function(t) .2*(2+cos(t))
+# new_food
 #' Production of resources (Plancton) - TEMPORARILY ARTIFICIAL FUNCTION WITH COSINUS; TO BE REPLACED BY A MORE REALISTIC ONE
 #'
 #' @param t time
@@ -116,8 +87,7 @@ respiration_rate = function(temperature,L){
 #' @examples
 new_food = function(t, Te, scale = 2) {
   Q10 = 1.6**((Te-10)/10)
-  toReturn = scale*Q10* (7 + cos( (2*pi/ 365)*(t-215) ) )#^2 #102 spring #2.2
-  #toReturn = scale*Q10* (2 + cos( (2*pi/ 365)*(t-215) ) )^2 #102 spring #2.2
+  toReturn = scale*Q10* (7 + cos( (2*pi/ 365)*(t-215) ) )#^2 #102 spring
   return(toReturn)
 }
 

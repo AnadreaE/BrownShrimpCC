@@ -56,7 +56,8 @@ temperature_range <- seq(0,30, 0.1) #(10,15)
 #First calculate K reference values
 k_vals_F = sapply(temperature_range, K_func_briere, parameters_solv$Fem_params)
 
-
+#NOW GO THROUGH ALL SIZE CLASSES TO CALCULATE DE DEVELOPMENT TIME FOR CONSTANT
+#TEMPERATURES AND FIT LINEARLY TO 1/K(T)
 #### JUVI ####
 
 development.df_juvI <- data.frame(row = seq(1, 1095))
@@ -78,9 +79,6 @@ development.df_juvI = development.df_juvI[ , !(names(development.df_juvI) == "ro
 #Count how many time steps there are, where individual's size is between min and max size of its size class range:
 dev_time_juvI <- sapply(development.df_juvI, function(col){
   BrownShrimp::count_devDays(col, juvI_min, juvI_max) } )
-
-#dev_time_juvI <- dev_time_juvI[-c(1)] #delete first element cuz doesn't make sense
-#dev.off()
 
 
 #With following plot, we know the shape of the curve (U shape. But inverted is again TPC)
@@ -501,8 +499,8 @@ plot.new()  # empty plot
 legend("center", legend = c('1/devTime', 'growth function'), fill = c("black", "red3"))
 
 #CONCLUSION COMPARATION A and B:
-#No relevant difference, therefore for sake of simplicity and saving computing effort
-#option A was choosen.
+#No relevant difference, therefore for the sake of simplicity and saving computing effort
+#option A was chosen.
 
 #NOW CHECK FACTOR AS EXPONENTIAL FUNCTION
 
@@ -917,8 +915,6 @@ plot( (1:length(dev_time_juvIV))*0.1, 1/dev_time_juvIV, main = "1/DevTime Juveni
       las =1, xlab = 'T [C°]', ylab = 'Growt rate [1/days]', col = 'gray41', cex.lab= 1.2)
 lines(temperature_range, k_vals_F, col = 'red4', lwd = 2)
 legend("topright", legend = c('1/devTime', 'K_func_briere'), fill = c('gray41', "red4"), cex = 1.1)
-
-
 
 
 

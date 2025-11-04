@@ -21,13 +21,6 @@ ble_data = read.csv("./data/BLE_Inlandslandungen_SpeiseKrabbe.csv", sep = ';')
 
 t_5years = seq(0,length(temperature_14_18$temperature)-.1)
 
-#BF_p = c(1.1476,  2.739,  5.604, 11.65, 21.524, 17.976, 11.613,  5.346) #see calculation in file 'sizeSpectraMoldel.R'
-#BM_p = c(1.464, 3.645, 8.855, 22.622, 37.614) #see calculation in file 'sizeSpectraMoldel.R'
-
-
-#IC_parameterized = c(P = 2, E = 0.759, L= 0.38  ,
- #            BF = BF_p, BM = BM_p) #Initial conditions according to estimations with fishery landings data.
-
 BF_p = c(3.801852,  7.063263,  12.657331, 25.166351, 49.297133, 45.876772, 34.672340,  19.396426)#*1e-6 #see calculation in file 'sizeSpectraMoldel.R'
 BM_p = c(4.573332  , 8.203546 , 13.791605 , 26.328928 , 43.371121  )#*1e-6 #see calculation in file 'sizeSpectraMoldel.R'
 IC_parameterized.v2 = c(P = 2, E = 2, L= 1 ,
@@ -35,7 +28,6 @@ IC_parameterized.v2 = c(P = 2, E = 2, L= 1 ,
 
 
 #### TEST V5 (1 out of 4) WITHOUT ANY KIND OF PREASURE (P NEITHER F) ####
-
 
 noPreasure_params = parameters_solv
 noPreasure_params$general_params$Fi = 0 #No fishery
@@ -46,7 +38,7 @@ test_noPreasure <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_noPreasure, year = 2013, title = "NP")
+plot_sizeSpectra_old(test_noPreasure, year = 2013, title = "NP")
 
 
 #### TEST V5 (2 out of 4) ONLY PREDATION ####
@@ -54,38 +46,37 @@ plot_sizeSpectra(test_noPreasure, year = 2013, title = "NP")
 pred_params = parameters_solv
 pred_params$general_params$Fi = 0 #No fishery
 
-
 start <- Sys.time()
 test_predation <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2, parameters = pred_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_predation, year = 2015, title = "Pred")
+plot_sizeSpectra_old(test_predation, year = 2015, title = "Pred")
 
 #### TEST V5 (3 out of 4) ONLY FISHERY ####
 
 fishery_params = parameters_solv
 fishery_params$general_params$Imax_ik = 0 #No predation
-fishery_params$general_params$Fi = 0.05 #reduced fishery
+fishery_params$general_params$Fi = 4/365
 
 start <- Sys.time()
 test_fishery <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2, parameters = fishery_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(test_fishery, year = 2015, title = "Fi")
+plot_sizeSpectra_old(test_fishery, year = 2015, title = "Fi")
 
 #### TEST V5 (4 out of 4) PREDATION AND FISHERY####
 
 bothPF_params = parameters_solv
-bothPF_params$general_params$Fi = 0.05 #reduced fishery
+bothPF_params$general_params$Fi = 4/365
 
 start <- Sys.time()
 test_bothFP <- solver_sizeClass.v5(t = t_5years, state = IC_parameterized.v2, parameters = bothPF_params, temperature_dataSet = temperature_14_18)
 print(Sys.time() - start)
 
 #Plot size spectra
-plot_sizeSpectra(sol_df_main = test_bothFP, year = 2015, title = "F&P")
+plot_sizeSpectra_old(sol_df_main = test_bothFP, year = 2015, title = "F&P")
 
 #Plot fishery catch:
 #define years to be inspected
@@ -101,16 +92,10 @@ for (i in years_to_see){
 
   #Calculate the total landings per month (considering 50% discard):
 
-  #monthly_landing_2015 = sol_yearToSee$catch.BF1 * 7587.1 / 1000 /2 #ttl area = 7587.1 ; convert Kg to t /1000; /2 50%bycatch
-  #monthly_landing_2015_2 = sol_yearToSee$catch.BF1 * 7587.1 / 1000 /1.05 #ttl area = 7587.1 ; convert Kg to t /1000; /2 50%bycatch
   plot(ble_data$month[ble_data$year == i], ble_data$t[ble_data$year == i], col = 'gray42',  lwd = 2,  type = 'b',
        main = paste(' ', i), ylim = c(0,2100), cex.main = 1.5,
        xlab = "Month", ylab = "Landing [tones]", cex.lab = 1.5, cex.axis = 1.25)
-  #lines(sol_yearToSee$month, sol_yearToSee$catch_undersized.BF1*7587.1/1000*0.5 + sol_yearToSee$catch_commercial.BF1, lwd = 2, col = '#c994c7')
-  #lines(sol_yearToSee$month, sol_yearToSee$catch_undersized.BF1*7587.1/1000*0.95 + sol_yearToSee$catch_commercial.BF1, col = 'green' )
-  #lines(sol_yearToSee$month, (sol_yearToSee$catch_commercial.BF1 - sol_yearToSee$catch_undersized.BF1)*7587.1/1000*0.5 , lwd = 2, col = '#c994c7')
-  #lines(sol_yearToSee$month, (sol_yearToSee$catch_commercial.BF1 - sol_yearToSee$catch_undersized.BF1)*7587.1/1000*0.95, col = 'green' )
-  lines(sol_yearToSee$month, (sol_yearToSee$catch_commercial.BF5 )*7587.1/1000, col = 'green' )
+  lines(sol_yearToSee$month, (sol_yearToSee$catch_commercial.BF6 )*7587.1/1000, col = 'green' )
   lines(sol_yearToSee$month, (sol_yearToSee$catch_undersized.BF1)*7587.1/1000, col = '#c994c7')
 }
 
@@ -133,7 +118,7 @@ for (i in years_to_see){
 #STACKED AREA PLOT
 
 test_pred.V5_red <- test_predation[ , c(3:17, 20)] # delete timesteps column, plancton  and predator column
-#test_both.V5_red <- test_bothFP[ , c(3:17, 20)] # delete timesteps column, plancton  and predator column
+
 
 test_both.V5_red = test_pred.V5_red %>%
       mutate(L1 = BF1 + BM1, L2 = BF2 + BM2, L3 = BF3 + BM3, L4 = BF4 + BM4,  L5 = BF5 + BM5) %>%
@@ -161,8 +146,6 @@ ggplot(test_both_long, aes(x = dateTime, y = value, fill = variable)) +
     y = TeX("Biomass [Kg $Km^{-2}$]"),
     fill = "Size class"
   )
-
-
 
 #Look at plankton
 par(mfrow = c(1,1))
@@ -288,7 +271,7 @@ end15 = as.POSIXct("2015-12-31", format="%Y-%m-%d", tz = "UTC")
 plot_year = 2018
 plot(weekly_avg_noPreasure$avg_L[weekly_avg_noPreasure$year == plot_year], weekly_avg_noPreasure$avg_B[weekly_avg_noPreasure$year == plot_year],
      lwd = 3, col = 'grey', lty=1, ylim = c(5,1900), xlim = c(2.8, 5) ,
-     xlab = 'L in cm', ylab = TeX(" biomass Kg $Km^{-2}$"), main = paste('Fi baseline ', bothPF_params$general_params$Fi, '\n ', plot_year))
+     xlab = 'L in cm', ylab = TeX(" biomass Kg $Km^{-2}$"), main = paste('Fi baseline ', bothPF_params$general_params$Fi, 'd^-1 \n ', plot_year))
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year], lwd = 2, col ='skyblue4' )
 points(weekly_avg_fish$avg_L[weekly_avg_fish$year == plot_year][1], weekly_avg_fish$avg_B[weekly_avg_fish$year == plot_year][1], lwd = 2, col ='skyblue', cex = 1.5, pch = 8 )
 
@@ -301,18 +284,4 @@ points(weekly_avg_both$avg_L[weekly_avg_both$year == plot_year][1], weekly_avg_b
 
 legend("topleft", legend = c('no preasure', 'only predation', 'only fishery', 'both F & P'),
        fill = c('grey', 'indianred3', 'skyblue4','hotpink'), border = NA, bty = "n", y.intersp = 0.7)
-
-
-
-##### PLOTS THESIS ######
-
-par(mfrow = c(1,2))
-
-plot_sizeSpectra(test_bothFP, sol_df_overlay= test_predation ,year = 2017, title = "F&P vs only P")
-
-plot(seq(1,20), 3*seq(1,20))
-
-
-
-
 

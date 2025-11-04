@@ -13,7 +13,7 @@ alpha_igr(w)
 \item{w}{\link{g}}
 }
 \value{
-alpha value \link{gr (prey) m-2} , m2 considering 10 cm water depth as
+alpha value \link{gr (food source) m-2} , m2 considering 10 cm water depth as
 }
 \description{
 Alpha param. used in ingestion rate function.

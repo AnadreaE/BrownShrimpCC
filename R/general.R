@@ -170,6 +170,44 @@ prep_sizeSpectra <- function(sol_df, year) {
   out
 }
 
+#Difference here is that we consider L here too
+prep_sizeSpectrum <- function(sol_df, year) {
+  past_year <- paste0("31/12/", as.character(year - 1))
+  next_year <- paste0("01/01/", as.character(year + 1))
+
+  sol_df_year <- sol_df %>%
+    filter(as.Date(dateTime) > as.Date(past_year, format = "%d/%m/%Y") &
+             as.Date(dateTime) < as.Date(next_year, format = "%d/%m/%Y")) %>%
+    select(L, BF1:BF8, BM1:BM5)
+
+  out <- list()
+
+  for (q in 1:4) {
+    init_idx <- 91 * (q - 1) #+ 1
+    final_idx <- 91 * q
+    quarter_data <- sol_df_year[init_idx:final_idx, ]
+
+    L_mean = mean(quarter_data$L)
+
+    f_means <- colMeans(quarter_data[paste0("BF", 1:8)])
+    m_means <- colMeans(quarter_data[paste0("BM", 1:5)])
+
+    f_stack <- f_means[paste0("BF", 1:5)]
+    m_stack <- m_means
+    f_extra <- f_means[paste0("BF", 6:8)]
+
+    f_vals <- c(f_stack, f_extra)
+    m_vals <- c(m_stack, rep(0, length(f_extra)))
+
+    juv_ttl = c(f_stack + m_stack, f_extra)
+    out[[q]] <- c(L = L_mean, juv_ttl)
+  }
+  out_df <- do.call(rbind, out)
+  rownames(out_df) <- paste0("Q", 1:4)
+  return(out_df)
+}
+
+
 prep_sizeSpectra_freq <- function(sol_df, year) {
   past_year <- paste0("31/12/", as.character(year - 1))
   next_year <- paste0("01/01/", as.character(year + 1))
@@ -278,8 +316,9 @@ plot_sizeSpectra_old <- function(sol_df_main, year, title) {
 
 plot_sizeSpectra <- function(sol_df_main, sol_df_overlay = NULL, year, title, legend = c("m", "f", " ")) {
   #cols <- c("f" = "#8856a7", "m" = "#add8e6", "gray50")
-  cols <- c(adjustcolor("#43a2ca", alpha.f = 0.8))#, adjustcolor("#43a2ca", alpha.f = 0.8), adjustcolor("gold1", alpha.f = 0.65)) #c("#8856a7", "#8856a7", "#f7fcb9")
-  label_map <- c("BL1","BL2","BL3","BL4","BL5","BL6","BL7","BL8")
+  cols <- c(adjustcolor("#43a2ca", alpha.f = 0.65))#, adjustcolor("#43a2ca", alpha.f = 0.8), adjustcolor("gold1", alpha.f = 0.65)) #c("#8856a7", "#8856a7", "#f7fcb9")
+  #label_map <- c("BL1","BL2","BL3","BL4","BL5","BL6","BL7","BL8")
+  label_map <- as.character(sizes[2:9])
 
   mats_main <- prep_sizeSpectra(sol_df_main, year)
   mats_overlay <- if (!is.null(sol_df_overlay)) prep_sizeSpectra(sol_df_overlay, year) else NULL
@@ -287,24 +326,23 @@ plot_sizeSpectra <- function(sol_df_main, sol_df_overlay = NULL, year, title, le
   par(mfrow = c(2, 2))
   ylim_top = 1
   for (q in 1:4) {
-    mat <- mats_main[[q]]
+    mat <- colSums(mats_main[[q]])
 
     ylim_top <- max(
-      c(colSums(mat), ylim_top,
-        if (!is.null(mats_overlay)) colSums(mats_overlay[[q]]) else 0),
+      c(max(mat), ylim_top,
+        if (!is.null(mats_overlay)) max(mats_overlay[[q]]) else 0),
       na.rm = TRUE
     ) * 0.95
 
 
-
-    bar_centers <- barplot(
+  barplot(
       mat,
       col = cols, #cols[rownames(mat)],
-      main = paste(title, "\n Q", q, "–", year),
+      main = paste(title, "Q", q, "–", year),
       names.arg = label_map,
       las = 2,
-      border = NA,#"#8856a7",
-      cex.main = 1.5,
+      border = "#43a2ca",
+      cex.main = 1.25,
       cex.axis = 1.2,
       cex.names = 1.2,
       ylim = c(0, ylim_top),
@@ -320,9 +358,9 @@ plot_sizeSpectra <- function(sol_df_main, sol_df_overlay = NULL, year, title, le
     # 2. Overlay dataset on top (gray with outline)
     if (!is.null(mats_overlay)) {
       barplot(
-        mats_overlay[[q]],
-        col = adjustcolor("gold1", alpha.f = 0.5),#c("f" = adjustcolor("gray", alpha.f = 0.5), "m" = adjustcolor("gray", alpha.f = 0.5)),
-        border = NA,#adjustcolor("gray", alpha.f = 0.5),#"#636363",
+        colSums(mats_overlay[[q]]),
+        col = adjustcolor("gold1", alpha.f = 0.3),#c("f" = adjustcolor("gray", alpha.f = 0.5), "m" = adjustcolor("gray", alpha.f = 0.5)),
+        border = "gold1",
         #lty = 2, #dashed lines
         space = 0,
         lwd = 0,

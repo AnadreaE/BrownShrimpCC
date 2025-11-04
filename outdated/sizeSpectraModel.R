@@ -1,4 +1,4 @@
-#SIZE SPECTRA MODEL
+#SIZE SPECTRUM MODEL
 
 library(ggplot2)
 library(deSolve)

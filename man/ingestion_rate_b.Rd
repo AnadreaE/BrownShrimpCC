@@ -12,7 +12,7 @@ ingestion_rate_b(temperature, L, Food, general_params, sex_params)
 
 \item{L}{size class \link{cm}}
 
-\item{Food}{Plancton (variable state)}
+\item{Food}{Plancton (variable state) mg C m-2 (same as IC in I(F))}
 }
 \value{
 growth rate in weight \link{g day-1}
