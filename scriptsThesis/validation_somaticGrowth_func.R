@@ -1,3 +1,10 @@
+#<!--
+# SPDX-FileCopyrightText: 2025 Helmholtz-Zentrum hereon GmbH
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileContributor Andrea Farfan <farfanqbb@gmail.de>
+#  -->
+
+
 ############################################
 ## The growth function developed in this  ##
 ## thesis will be validated and tested    ##

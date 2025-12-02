@@ -1,3 +1,9 @@
+#<!--
+# SPDX-FileCopyrightText: 2025 Helmholtz-Zentrum hereon GmbH
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileContributor Andrea Farfan <farfanqbb@gmail.de>
+#  -->
+
 
 #' Create specific data set for temperature within a time range
 #'

@@ -1,9 +1,17 @@
-################################################
-## Following functions are meant to be        ##
-## used in simulation for either individuals  ##
-## or cohorts.                                ##
-## Source: Temming                            ##
-################################################
+#<!--
+# SPDX-FileCopyrightText: 2025 Helmholtz-Zentrum hereon GmbH
+# SPDX-License-Identifier: CC0-1.0
+# SPDX-FileContributor Andrea Farfan <farfanqbb@gmail.de>
+#  -->
+
+
+
+############################################################
+## Following functions are meant to be  used as benchmark ##
+# in simulation for either individuals or cohorts and are ##
+# 1 to 1 equations proposed by author Temming.            ##
+## Source: Temming                                        ##
+############################################################
 
 
 #' Development status Egg
