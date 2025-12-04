@@ -32,9 +32,12 @@ Only if any changes required this functions can be modified, e.g., for changing 
 Helmholtz-Zentrum Hereon
  
 ## Authors and acknowledgment
+
+Helmholtz-Zentrum Hereon
 Andrea Farfan Aragon
 Functions developed with the support of Ovidio Garcia 
 
 ## Project status  
+
 Under development
 
