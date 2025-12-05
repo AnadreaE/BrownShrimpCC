@@ -25,7 +25,9 @@ All libraries needed will be installed when downloading the project.
 You can either download the project from GitHub [BrownShrimpCC] (https://github.com/AnadreaE/BrownShrimpCC.git) by running following lines in the console: 
 
 install.packages("devtools")  # install devtools if necessary
+
 devtools::install_github("AnadreaE/BrownShrimpCC")
+
 library(BrownShrimpCC)
 
 
