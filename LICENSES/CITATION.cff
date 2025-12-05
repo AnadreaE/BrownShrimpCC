@@ -1,0 +1,40 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: SizeSpectrum_BrownShrimp
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - name: Helmholtz-Zentrum hereon GmbH
+    address: Max-Planck-Straße 1
+    post-code: '21502 '
+    city: Geesthacht
+    country: DE
+    website: >-
+      https://www.hereon.de/institutes/coastal_systems_analysis_modeling/ecosystem_modelling/index.php.de
+  - given-names: Andrea Elvira
+    family-names: ' Farfan Aragon'
+    email: farfanqbb@gmail.com
+    name-particle: Andrea
+identifiers:
+  - type: url
+    value: 'https://github.com/AnadreaE/BrownShrimpCC.git'
+    description: Github repository
+repository-code: 'https://github.com/AnadreaE/BrownShrimpCC.git'
+abstract: >-
+  The BrownShrimpCC is a package that simulates the growth
+  and development of the Brown Shrimp (Crangon crangon). The
+  model used for brown shrimp is a size-spectrum model
+  coupled with a stage-based component that describes the
+  development of egg and larval stages. With this model, we
+  aim to investigate how predation and fisheries affect the
+  size structure and biomass of the brown shrimp in the
+  North Sea.
+keywords:
+  - Brown shrimp
+  - size-spectrum
+license: Apache-2.0
+date-released: '2025-12-03'

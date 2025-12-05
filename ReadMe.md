@@ -13,10 +13,41 @@ Brown shrimp size class model
 The BrownShrimpCC is a package that simulates the growth and development of the Brown Shrimp (Crangon crangon). The model used for brown shrimp is a size-spectrum model coupled with a stage-based component that describes the development of egg and larval stages. 
 With this model, we aim to investigate how predation and fisheries affect the size structure and biomass of the brown shrimp in the North Sea.  
 
-## Instalation 
 
-You can either download the project from GitHub [BrownShrimpCC](https://github.com/AnadreaE/BrownShrimpCC.git) or install it from the USB stick that was handed over with the Thesis. 
-Once installed, go to the build tab in the top right window of the RStudio GUI, click on `More`, `clean and install`. Then it shall be ready to use.   
+## Requirements 
+
+To install and run this program, you just need to have R and RStudio installed in your computer. 
+All libraries needed will be installed when downloading the project.  
+
+
+## Installation 
+
+You can either download the project from GitHub [BrownShrimpCC] (https://github.com/AnadreaE/BrownShrimpCC.git) by running following lines in the console: 
+
+install.packages("devtools")  # install devtools if necessary
+devtools::install_github("AnadreaE/BrownShrimpCC")
+library(BrownShrimpCC)
+
+
+Important:
+Please install the package using the command above (or via RStudio → Build → Install).
+If the project folder is downloaded manually and used without installation, dependencies will not install automatically.
+Once installed, go to the build tab in the top right window of the RStudio GUI, click on `More`, `clean and install` to ensure that all functions and data is available. Then it shall be ready to use.   
+
+To install [BrownShrimpCC] from the USB stick that was handed over with the Thesis you may have to install all required libraries manually:
+
+deSolve,
+    RColorBrewer,
+    viridis,
+    dplyr,
+    tidyr,
+    colorspace,
+    latex2exp,
+    stringr,
+    lubridate
+
+and additionally, it is recommended to install "devtools".
+
 
 ## License 
 
@@ -26,7 +57,7 @@ Apache-2.0
 
 Structure: 
 Folder R: contains files where all the functions that we need to run the simulations are defined. 
-Folder scriptsThesis: contains the files with the steps followed to get to the functions (refer to chapter `Model development` from the Thesis).
+Folder scriptsThesis: contains the files with the steps followed to get to the functions (refer to chapter `Model development` from the Thesis work related to this project).
 Folder Simulations: contains the files where we apply the functions and run simulations of different scenarios to address the research question. 
  
 As an inspiration, I recommend to take a look to the file `Sims.R` under the folder `Simulations`, where some simulations of different scenarios are carried out. All simulations and plots included in the thesis are found there. 
@@ -41,11 +72,19 @@ test <- solver_sizeClass.v5(t = time_steps, state = initi_conditions, parameters
 This function includes all growth, reproduction, predation, and fishery functions developed in the Master's thesis `Changes in body size and biomass of brown shrimp (Crangon crangon) in response to predation and fishery in the Southern North Sea`. 
 
 
+## Contribution Guidelines 
+
+To contribute to BrownShrimpCC, Clone this repo locally and commit your code on a separate branch.  
+
+
 ## Support
 Helmholz-Zentrum Hereon
  
 ## Authors and acknowledgment
+
+Helmholz-Zentrum Hereon
 Andrea Farfan Aragon
+
 ## Project status  
 Under development
 

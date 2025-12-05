@@ -26,9 +26,9 @@ library(stringr)
 
 #library(devtools)
 
-#Read water temperature from Wadden Sea:
-temperature_dataSet <- read.csv("./data/temperature_10ger.csv", header = TRUE, sep = ';')
-temperature_10_15 <- temperature_germany %>% filter(date_time > as.Date("31/12/2009", format = "%d/%m/%Y") & date_time < as.Date("01/01/2016", format = "%d/%m/%Y"))
+#Read water temperature from Germany:
+temperature_dataSet <- read.csv("./data/temperature_10ger.csv")#, header = TRUE, sep = ';')
+temperature_10_15 <- temperature_dataSet %>% filter(date_time > as.Date("31/12/2009", format = "%d/%m/%Y") & date_time < as.Date("01/01/2016", format = "%d/%m/%Y"))
 
 
 ##########

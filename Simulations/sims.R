@@ -65,10 +65,10 @@ bothPF_params = parameters_solv
 bothPF_params$general_params$Fi = 4/365 #(1-exp(-5))/365
 bothPF_params$general_params$L50 = 3.69 #et. al Santos 2018
 bothPF_params$general_params$SR = 0.75 #et. al Santos 2018
-bothPF_params$general_params$Imax_ik = 0.16 #(1-exp(-2))/365 #reduce predation in these years as per: https://www.openseas.org.uk/news/on-thin-ices-north-sea-cod/
+bothPF_params$general_params$Imax_ik = 0.16 #reduce predation in these years as per: https://www.openseas.org.uk/news/on-thin-ices-north-sea-cod/
 
-BF = c(8.695212, 15.349638, 21.461595, 24.672213,25.871618, 17.536662, 14.090960, 11.933151)
-BM = c(10.85817, 19.93554, 29.01086, 36.67041, 58.26882)
+BF = c(8.7, 15.35, 21.46, 24.67,25.87, 17.54, 14.09, 11.93)
+BM = c(10.86, 19.94, 29.01, 36.67, 58.27)
 
 Init.v3 = c(P = 2, E = 2, L= 1 ,
             BF = BF, BM = BM)
